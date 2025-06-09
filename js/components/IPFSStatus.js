@@ -312,6 +312,7 @@ export class IPFSStatus extends HTMLElement {
   renderSnapshotHistory() {
     if (!this.ipfsHoverPopup) return;
     const history = JSON.parse(localStorage.getItem('snapshotHistory') || '[]');
+    console.log("Rendering snapshotHistory from localStorage:", history);
 
     if (history.length === 0) {
       this.ipfsHoverPopup.innerHTML = `
@@ -343,6 +344,7 @@ export class IPFSStatus extends HTMLElement {
                 timestamp: entry.timestamp || importedAt
               }))
             ];
+            console.log("Parsed snapshot history list:", parsed);
             localStorage.setItem('snapshotHistory', JSON.stringify(parsed));
             this.renderSnapshotHistory(); // rerender popup
           } else {
