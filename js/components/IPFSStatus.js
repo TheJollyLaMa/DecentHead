@@ -312,13 +312,58 @@ export class IPFSStatus extends HTMLElement {
   renderSnapshotHistory() {
     if (!this.ipfsHoverPopup) return;
     const history = JSON.parse(localStorage.getItem('snapshotHistory') || '[]');
-    this.ipfsHoverPopup.innerHTML = history
-      .slice(0, 10)
-      .map(entry => {
-        const date = new Date(entry.timestamp).toLocaleString();
-        const cls = entry.timestamp.startsWith(new Date().toISOString().slice(0, 10)) ? 'snapshot-today' : 'snapshot-old';
-        return `<div class="${cls}"><a href="https://w3s.link/ipfs/${entry.cid}" target="_blank">${date}</a></div>`;
-      }).join('');
+
+    if (history.length === 0) {
+      this.ipfsHoverPopup.innerHTML = `
+        <div class="snapshot-import-wrapper">
+          <label for="snapshotCidInput">No snapshots found. Import one:</label>
+          <input type="text" id="snapshotCidInput" placeholder="Enter IPFS CID" />
+          <button id="importSnapshotBtn">Import</button>
+        </div>
+      `;
+      const input = this.ipfsHoverPopup.querySelector('#snapshotCidInput');
+      const button = this.ipfsHoverPopup.querySelector('#importSnapshotBtn');
+
+      button.addEventListener('click', async () => {
+        const cid = input.value.trim();
+        if (!cid) return alert("Please enter a valid CID.");
+        try {
+          const url = `https://w3s.link/ipfs/${cid}`;
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Failed to fetch snapshot");
+          const snapshot = await res.json();
+          if (snapshot.snapshotHistory) {
+            // Add the imported CID as the most recent entry
+            const importedAt = new Date().toISOString();
+            const previous = Array.isArray(snapshot.snapshotHistory) ? snapshot.snapshotHistory : [];
+            const parsed = [
+              { cid, timestamp: importedAt },
+              ...previous.filter(e => e?.cid).map(entry => ({
+                cid: entry.cid,
+                timestamp: entry.timestamp || importedAt
+              }))
+            ];
+            localStorage.setItem('snapshotHistory', JSON.stringify(parsed));
+            this.renderSnapshotHistory(); // rerender popup
+          } else {
+            alert("No snapshotHistory found in CID data.");
+          }
+        } catch (err) {
+          console.error("Snapshot import failed:", err);
+          alert("Failed to import snapshot.");
+        }
+      });
+
+    } else {
+      this.ipfsHoverPopup.innerHTML = history
+        .slice(0, 10)
+        .map(entry => {
+          // Use entry.cid and fallback timestamp formatting
+          const date = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '[No date]';
+          const cls = entry.timestamp && entry.timestamp.startsWith(new Date().toISOString().slice(0, 10)) ? 'snapshot-today' : 'snapshot-old';
+          return `<div class="${cls}"><a href="https://w3s.link/ipfs/${entry.cid}" target="_blank">${date}</a></div>`;
+        }).join('');
+    }
   }
 
 

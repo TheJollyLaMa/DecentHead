@@ -1,12 +1,51 @@
-
 header {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
   width: 100%;
   height: 100px;
   margin: 5px;
   background: radial-gradient(circle, #ffffff6b, #000000);
   box-shadow: 0 0 10px #00e5ff;
-  overflow-x: auto;
+  overflow: visible;
+}
+
+#header-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+#header-center {
+  text-align: center;
+  flex-grow: 1;
+}
+
+#app-title {
+  font-family: 'Bungee', sans-serif, monospace;
+  font-size: 3.5rem;
+  color: #00ffcc41;
+  text-shadow: 0 0 3px #7300ff, 0 0 20px #00ffff, 0 0 30px #606101;
+  margin: 0;
+}
+
+.title-symbol {
+  font-family: 'Courier New', monospace;
+}
+
+.title-main {
+  font-family: 'Bungee', sans-serif;
+}
+
+#app-subtitle {
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  font-size: 0.8rem;
+  color: #7300ff;
+  text-shadow: 0 0 10px #00e5ff, 0 0 20px #00ffff;
+  margin: 0;
 }
 
 #walletHeaderContainer {
@@ -18,6 +57,7 @@ header {
 #wallet-ticker-circle .ticker-letter {
   font-size: 0.4rem;
 }
+
 #walletIconWrapper {
   position: relative;
   text-align: center;
@@ -59,8 +99,6 @@ header {
 }
 
 /* Ticker circle styles */
-/* Ticker circle new styles */
-/* New ticker wrapper and ticker circle for wallet */
 .ticker-wrapper.wallet-ticker {
   position: absolute;
   top: 50%;
@@ -152,31 +190,62 @@ header {
   border-color: #00ffcc;
   box-shadow: 0 0 15px #00ffcc;
 }
-#header-wrapper {
+
+
+.hover-popup {
+  position: absolute;
+  top: 110%;
+  left: calc(50% + 50px);
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #00e5ff;
+  padding: 10px;
+  border: 1px solid #00e5ff;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  z-index: 10000;
+  white-space: nowrap;
+  max-width: 300px;
+  box-shadow: 0 0 8px #00e5ff;
+}
+
+.hover-popup div a {
+  color: #00ffff;
+  text-decoration: none;
+}
+
+.hover-popup div a:hover {
+  text-decoration: underline;
+}
+
+.snapshot-import-wrapper {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  position: relative;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px 0;
 }
 
-#header-center {
-  text-align: center;
-  flex-grow: 1;
+.snapshot-import-wrapper input {
+  background: #000;
+  color: #00e5ff;
+  border: 1px solid #00e5ff;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 0.7rem;
 }
 
-#app-title {
-  font-family: 'Bungee', sans-serif;
-  font-size: 3.5rem;
-  color: #00ffcc41;
-  text-shadow: 0 0 3px #7300ff, 0 0 20px #00ffff, 0 0 30px #606101;
-  margin: 0;
+.snapshot-import-wrapper button {
+  background: #00e5ff;
+  color: #000;
+  border: none;
+  padding: 5px;
+  font-size: 0.7rem;
   font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
 }
-#app-subtitle {
-  font-family: 'Comic Sans MS', cursive, sans-serif;
-  font-size: 0.8rem;
-  color: #7300ff;
-  text-shadow: 0 0 10px #00e5ff, 0 0 20px #00ffff;
-  margin: 0;
+
+.snapshot-import-wrapper button:hover {
+  background: #00ffff;
+  color: #000;
 }

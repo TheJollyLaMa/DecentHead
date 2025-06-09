@@ -12,7 +12,11 @@ export class AppTitle extends HTMLElement {
     this.shadowRoot.innerHTML = `
         <link rel="stylesheet" href="../css/header.css" />
         <div id="header-center">
-            <h1 id="app-title">:: - ⊡ - ☥ Decent 🦊 Head ☥ - ⊡ - ::</h1>
+            <h1 id="app-title">
+              <span class="title-symbol">::-⊡-☥</span>
+              <span class="title-main"> Decent 🦊 Head </span>
+              <span class="title-symbol">☥-⊡-::</span>
+            </h1>
             <h3 id="app-subtitle">(Another Decent Frankenstein)</h3>
         </div>
     `;
