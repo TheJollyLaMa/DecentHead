@@ -1,4 +1,4 @@
-<file name=0 path=/Users/j/DevTree/DecentHead/css/header.css>.ankh-container {
+.ankh-container {
   position: relative;
   display: inline-block;
 }
@@ -477,4 +477,4 @@ header {
   z-index: 10001;
   white-space: nowrap;
   pointer-events: auto;
-}</file>
+}
