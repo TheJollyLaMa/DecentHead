@@ -1,6 +1,39 @@
+<file name=0 path=/Users/j/DevTree/DecentHead/css/header.css>.ankh-container {
+  position: relative;
+  display: inline-block;
+}
+
+.ankh-menu {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #00e5ff;
+  border-radius: 6px;
+  box-shadow: 0 0 6px #00e5ff;
+  color: #00e5ff;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  z-index: 10001;
+  white-space: nowrap;
+  pointer-events: auto;
+  display: block;
+}
+
+.ankh-menu .menu-item {
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.ankh-menu .menu-item:hover {
+  color: #ffcc00;
+}
 .ankh-wrapper {
   position: relative;
   display: inline-block;
+  margin: 0;
+  padding: 0;
 }
 
 .sparkle-top {
@@ -120,6 +153,14 @@ header {
   font-family: 'Bungee', sans-serif, monospace;
   font-size: 3.5rem;
   margin: 0;
+}
+
+#app-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 100px;
 }
 
 .title-symbol {
@@ -358,3 +399,82 @@ header {
 .ankh-wrapper:hover .sparkle {
   animation: sparkle-rise 0.8s ease-out forwards;
 }
+
+/* --- Dropdown Option and Token Balance Styles --- */
+.dropdown-option {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease-in-out;
+  background: rgba(0, 0, 0, 0.5);
+  text-decoration: none;
+}
+.dropdown-option a {
+  color: white;
+  text-decoration: none;
+}
+
+.dropdown-option:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-option img {
+  width: 35px;
+  height: 35px;
+}
+
+.token-balance {
+  padding: 10px 12px;
+  color: white;
+  background: rgba(19, 41, 37, 0.5);
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#app-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 100px;
+}
+
+.ankh-left,
+.ankh-right {
+  display: flex;
+  align-items: center;
+}
+
+.title-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.right-ankh-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 999;
+  background: rgba(1, 154, 131, 0.838);
+  padding: 10px;
+}
+
+.dropdown-menu.right-ankh-menu {
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #00e5ff;
+  border-radius: 6px;
+  box-shadow: 0 0 6px #00e5ff;
+  color: #00e5ff;
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  z-index: 10001;
+  white-space: nowrap;
+  pointer-events: auto;
+}</file>
