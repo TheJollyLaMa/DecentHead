@@ -42,10 +42,47 @@ class RightAnkhDropdown extends HTMLElement {
     // Add "Share Data" option after existing dropdown-option
     const dropdownMenu = this.shadowRoot.querySelector('.dropdown-menu.right-ankh-menu > div');
     if (dropdownMenu) {
+      // --- Share Data Option ---
       const shareOption = document.createElement('div');
       shareOption.className = 'dropdown-option';
-      shareOption.textContent = 'Share Data';
+
+      shareOption.innerHTML = `
+        <span style="position: relative; display: inline-block; width: 22px; height: 22px; margin-right: 8px;">
+          <img src="./img/Ommm.png" alt="Ommm" style="height: 12px; position: absolute; top: -5px; left: 0px; opacity: 0.9; box-shadow: 0 0 6px #00e5ff; border-radius: 50%; z-index: 10000" />
+          <img src="./img/IPFS_Logo.png" alt="MetaMask" style="height: 16px; position: absolute; top: 4px; left: -10px; opacity: 0.6; z-index: 90000" />
+          <img src="./img/MetaMaskFox.png" alt="IPFS" style="height: 16px; position: absolute; top: 4px; left: 12px; opacity: 0.6; z-index: 8000" />
+        </span>
+        <span style="flex-grow: 1;">Share Data</span>
+        <label class="switch">
+          <input type="checkbox">
+          <span class="slider round"></span>
+        </label>
+      `;
       dropdownMenu.appendChild(shareOption);
+
+      // --- Subscribe Option ---
+      const subscribeOption = document.createElement('div');
+      subscribeOption.className = 'dropdown-option';
+
+      subscribeOption.innerHTML = `
+        <span style="display: flex; align-items: center; gap: 4px; margin-right: 8px;">
+          <img src="./img/Ommm.png" alt="Ommm" style="height: 16px; vertical-align: middle; box-shadow: 0 0 6px #00e5ff; border-radius: 50%;" />
+          <span>0.42 Ommm</span>
+        </span>
+        <span style="flex-grow: 1;">Subscribe</span>
+        <label class="switch">
+          <input type="checkbox" id="subscribe-switch">
+          <span class="slider round"></span>
+        </label>
+      `;
+      dropdownMenu.appendChild(subscribeOption);
+
+      const subscribeSwitch = subscribeOption.querySelector('#subscribe-switch');
+      subscribeSwitch.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          alert("Choose your subscription tier (popup UI to be added)");
+        }
+      });
     }
 
     container?.addEventListener('click', (e) => {
@@ -81,7 +118,7 @@ class RightAnkhDropdown extends HTMLElement {
 
       balanceDiv.innerHTML = `
         <span style="color:white; font-size:1.2rem;">
-          <img src="./img/Ommm.png" alt="Ommm" style="height:35px; vertical-align:middle;" />
+          <img src="./img/Ommm.png" alt="Ommm" style="height:35px; vertical-align:middle; box-shadow: 0 0 6px #00e5ff; border-radius: 50%;" />
           ${formatted}
         </span>
       `;
