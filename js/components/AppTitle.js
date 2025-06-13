@@ -17,13 +17,18 @@ export class AppTitle extends HTMLElement {
         }
       });
     });
-    // Hide all menus if clicking outside
-    document.addEventListener('click', () => {
-      // Only close menus if the shadowRoot is still present (component not removed)
+
+    // Add click listener to close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
       if (!this.shadowRoot) return;
-      this.shadowRoot.querySelectorAll('.dropdown-menu.right-ankh-menu').forEach(menu => {
-        menu.style.display = 'none';
-      });
+      const composedPath = e.composedPath();
+      const isInside = [...this.shadowRoot.querySelectorAll('.dropdown-menu.right-ankh-menu')]
+        .some(menu => composedPath.includes(menu));
+      if (!isInside) {
+        this.shadowRoot.querySelectorAll('.dropdown-menu.right-ankh-menu').forEach(menu => {
+          menu.style.display = 'none';
+        });
+      }
     });
   }
 
@@ -60,6 +65,9 @@ export class AppTitle extends HTMLElement {
     <div class="ankh-right">
       <right-ankh></right-ankh>
     </div>
+
+    
+    <subscription-modal></subscription-modal>
   </div>
 </div>
     `;

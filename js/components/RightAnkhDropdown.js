@@ -78,11 +78,38 @@ class RightAnkhDropdown extends HTMLElement {
       dropdownMenu.appendChild(subscribeOption);
 
       const subscribeSwitch = subscribeOption.querySelector('#subscribe-switch');
-      subscribeSwitch.addEventListener('change', (e) => {
-        if (e.target.checked) {
-          alert("Choose your subscription tier (popup UI to be added)");
+
+      // Prevent both click and change from closing the dropdown, with diagnostics
+      ['click', 'change'].forEach(eventType => {
+        subscribeSwitch.addEventListener(eventType, (e) => {
+          e.stopPropagation();
+          console.log(`[${eventType}] triggered on subscribe switch`);
+
+          if (eventType === 'change' && e.target.checked) {
+            console.log('Checkbox is checked. Attempting to open modal...');
+            // Query the modal from inside AppTitle's shadow DOM with delay
+            setTimeout(() => {
+              const appTitle = document.querySelector('app-title');
+              const modal = appTitle?.shadowRoot?.querySelector('subscription-modal');
+              if (modal) {
+                console.log('subscription-modal found (delayed):', modal);
+                modal.open?.();
+                console.log('Called modal.open()');
+              } else {
+                console.warn('subscription-modal still not found in AppTitle shadowRoot');
+              }
+            }, 50);
+          }
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        const composedPath = e.composedPath();
+        if (!composedPath.includes(this)) {
+          popup.style.display = 'none';
         }
       });
+
     }
 
     container?.addEventListener('click', (e) => {
