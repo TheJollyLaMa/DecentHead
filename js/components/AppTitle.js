@@ -30,6 +30,18 @@ export class AppTitle extends HTMLElement {
         });
       }
     });
+
+    // Add event listener for peacock icon click
+    const peacockIcon = this.shadowRoot.querySelector('.peacock-icon');
+    if (peacockIcon) {
+      peacockIcon.addEventListener('click', () => {
+        console.log("Peacock icon clicked");
+        const aboutModal = this.shadowRoot.querySelector('about-modal') || document.querySelector('about-modal');
+        if (aboutModal && typeof aboutModal.open === 'function') {
+          aboutModal.open();
+        }
+      });
+    }
   }
 
   render() {
@@ -56,7 +68,7 @@ export class AppTitle extends HTMLElement {
     <div class="title-center">
       <h1 id="app-title">
         <span class="title-symbol">::-⊡-</span>
-        <span class="title-main"> Decent</span> 🦚 <span class="title-main"> Head </span>
+        <span class="title-main"> Decent</span> <span class="peacock-icon" style="cursor: pointer;">🦚</span> <span class="title-main"> Header </span>
         <span class="title-symbol">-⊡-::</span>
       </h1>
       <h3 id="app-subtitle">(Another Decent Frankenstein)</h3>
@@ -66,8 +78,13 @@ export class AppTitle extends HTMLElement {
       <right-ankh></right-ankh>
     </div>
 
+
+
+    <about-modal></about-modal>
     
     <subscription-modal></subscription-modal>
+
+    
   </div>
 </div>
     `;
@@ -103,11 +120,19 @@ export class AppTitle extends HTMLElement {
         }
       });
     }, 0);
+
+    // Remove old about-trigger listener since replaced by peacock-icon outside
   }
 }
+
+
 
 const script = document.createElement('script');
 script.src = './js/components/RightAnkhDropdown.js';
 document.head.appendChild(script);
+
+const aboutModalScript = document.createElement('script');
+aboutModalScript.src = './js/components/AboutModal.js';
+document.head.appendChild(aboutModalScript);
 
 customElements.define('app-title', AppTitle);

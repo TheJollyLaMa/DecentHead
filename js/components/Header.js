@@ -6,6 +6,18 @@ class AppHeader extends HTMLElement {
 
   connectedCallback() {
     this.render();
+    this.setupHeaderEvents();
+  }
+
+  setupHeaderEvents() {
+    const peacock = this.shadowRoot.querySelector('.peacock-emoji');
+    const aboutModal = document.querySelector('about-modal');
+    if (peacock && aboutModal) {
+      peacock.addEventListener('click', () => {
+        console.log('Peacock icon clicked');
+        aboutModal.open();
+      });
+    }
   }
 
   render() {
