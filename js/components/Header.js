@@ -1,4 +1,4 @@
-class AppHeader extends HTMLElement {
+class DecentHeader extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -34,4 +34,4 @@ class AppHeader extends HTMLElement {
   }
 }
 
-customElements.define('app-header', AppHeader);
+customElements.define('decent-header', DecentHeader);
