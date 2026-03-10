@@ -1,3 +1,5 @@
+const _walletBase = new URL('../../', import.meta.url).href;
+
 export class WalletConnect extends HTMLElement {
   constructor() {
     super();
@@ -39,14 +41,14 @@ export class WalletConnect extends HTMLElement {
 
   render() {
     this.shadowRoot.innerHTML = `
-        <link rel="stylesheet" href="../css/header.css" />
+        <link rel="stylesheet" href="${_walletBase}css/header.css" />
         <div id="walletHeaderContainer" style="display: flex; align-items: center; justify-content: flex-end; height: 100px;">
           <div id="walletIconWrapper">
             <div class="ticker-wrapper wallet-ticker">
                 <div class="ticker-circle-metamask" id="wallet-ticker-circle"></div>
             </div>
             <button id="wallet-connect" class="neon-button disconnected">
-                <img id="metamaskIcon" src="img/MetaMaskFox.png" alt="Connect Wallet" />
+                <img id="metamaskIcon" src="${_walletBase}img/MetaMaskFox.png" alt="Connect Wallet" />
             </button>
             <div id="wallet-display"></div>
             <div id="walletHoverDisplay" class="wallet-hover-display"></div>
@@ -136,7 +138,7 @@ export class WalletConnect extends HTMLElement {
       const y = radius * Math.sin(angle) + origin_y;
       if (display[i] === 'logo') {
         const img = document.createElement('img');
-        img.src = 'img/Ens_Eth_Breathe.png';
+        img.src = `${_walletBase}img/Ens_Eth_Breathe.png`;
         img.alt = 'breathe';
         img.className = 'ticker-letter-logo';
         img.style.left = `${x}px`;

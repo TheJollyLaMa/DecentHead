@@ -1,3 +1,5 @@
+const _waitingBase = new URL('../../', import.meta.url).href;
+
 class WaitingModal extends HTMLElement {
   constructor() {
     super();
@@ -54,7 +56,7 @@ class WaitingModal extends HTMLElement {
 
         .modal-content::before {
           content: '';
-          background: url('img/IPFS_Companion.gif') center center / cover no-repeat;
+          background: url('${_waitingBase}img/IPFS_Companion.gif') center center / cover no-repeat;
           position: absolute;
           top: 0; left: 0;
           right: 0; bottom: 0;
@@ -118,7 +120,7 @@ class WaitingModal extends HTMLElement {
       <div class="modal-overlay">
         <div class="modal-content">
           <div class="modal-message" id="modalMessage">
-            <img src="img/Web3Storage.png" alt="Web3Storage Logo" />
+            <img src="${_waitingBase}img/Web3Storage.png" alt="Web3Storage Logo" />
             🛜 Send my credentials to my browser
           </div>
           <button id="prompt-button">Enter Email</button>
@@ -144,7 +146,7 @@ class WaitingModal extends HTMLElement {
         }
         const msg = this.shadowRoot.getElementById('modalMessage');
         if (msg) {
-          msg.innerHTML = '<img src="img/Web3Storage.png" alt="Web3Storage Logo" /> 🛜 Please check your email and click the confirmation button to complete the ipfs connection. 🪐📂';
+          msg.innerHTML = `<img src="${_waitingBase}img/Web3Storage.png" alt="Web3Storage Logo" /> 🛜 Please check your email and click the confirmation button to complete the ipfs connection. 🪐📂`;
         }
         const instructions = this.shadowRoot.getElementById('modalInstructions');
         if (instructions) {
@@ -155,7 +157,7 @@ class WaitingModal extends HTMLElement {
   }
 
   renderRing() {
-    const icons = ['img/IPFS_Logo.png', 'img/Ens_Eth_Breathe.png'];
+    const icons = [`${_waitingBase}img/IPFS_Logo.png`, `${_waitingBase}img/Ens_Eth_Breathe.png`];
     const ring = this.shadowRoot.getElementById('iconRing');
     const totalIcons = 8;
     const radius = 40;

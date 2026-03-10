@@ -1,3 +1,5 @@
+const _headerBase = new URL('../../', import.meta.url).href;
+
 class DecentHeader extends HTMLElement {
   constructor() {
     super();
@@ -22,8 +24,8 @@ class DecentHeader extends HTMLElement {
 
   render() {
     this.shadowRoot.innerHTML = `
-        <link rel="stylesheet" href="css/styles.css" />
-        <link rel="stylesheet" href="css/header.css" />
+        <link rel="stylesheet" href="${_headerBase}css/styles.css" />
+        <link rel="stylesheet" href="${_headerBase}css/header.css" />
         <header>
             <ipfs-status></ipfs-status>
             <app-title></app-title>

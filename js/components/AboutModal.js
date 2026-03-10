@@ -1,3 +1,5 @@
+const _aboutBase = new URL('../../', import.meta.url).href;
+
 class AboutModal extends HTMLElement {
   constructor() {
     super();
@@ -102,9 +104,9 @@ class AboutModal extends HTMLElement {
           <div class="about-section">
             <h3>🔗 Key Links:</h3>
             <ul>
-              <li><img src="./img/IPFS_Logo.png"/> <a href="https://w3s.link" target="_blank">Web3.Storage Console</a></li>
-              <li><img src="./img/MetaMaskFox.png"/> <a href="https://metamask.io/" target="_blank">MetaMask</a></li>
-              <li><img src="./img/Ommm.png"/> <a href="https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433" target="_blank">Buy Ommm on Uniswap</a></li>
+              <li><img src="${_aboutBase}img/IPFS_Logo.png"/> <a href="https://w3s.link" target="_blank">Web3.Storage Console</a></li>
+              <li><img src="${_aboutBase}img/MetaMaskFox.png"/> <a href="https://metamask.io/" target="_blank">MetaMask</a></li>
+              <li><img src="${_aboutBase}img/Ommm.png"/> <a href="https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433" target="_blank">Buy Ommm on Uniswap</a></li>
             </ul>
           </div>
 

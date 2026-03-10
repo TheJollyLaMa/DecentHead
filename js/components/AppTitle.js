@@ -1,3 +1,5 @@
+const _appTitleBase = new URL('../../', import.meta.url).href;
+
 export class AppTitle extends HTMLElement {
   constructor() {
     super();
@@ -46,7 +48,7 @@ export class AppTitle extends HTMLElement {
 
   render() {
     this.shadowRoot.innerHTML = `
-<link rel="stylesheet" href="../css/header.css" />
+<link rel="stylesheet" href="${_appTitleBase}css/header.css" />
 <div id="header-center">
   <div id="app-title-wrapper">
     <div class="ankh-left">
@@ -124,15 +126,5 @@ export class AppTitle extends HTMLElement {
     // Remove old about-trigger listener since replaced by peacock-icon outside
   }
 }
-
-
-
-const script = document.createElement('script');
-script.src = './js/components/RightAnkhDropdown.js';
-document.head.appendChild(script);
-
-const aboutModalScript = document.createElement('script');
-aboutModalScript.src = './js/components/AboutModal.js';
-document.head.appendChild(aboutModalScript);
 
 customElements.define('app-title', AppTitle);

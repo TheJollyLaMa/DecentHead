@@ -1,3 +1,5 @@
+const _rightAnkhBase = new URL('../../', import.meta.url).href;
+
 class RightAnkhDropdown extends HTMLElement {
   constructor() {
     super();
@@ -6,7 +8,7 @@ class RightAnkhDropdown extends HTMLElement {
 
   connectedCallback() {
     this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="../css/header.css" />
+      <link rel="stylesheet" href="${_rightAnkhBase}css/header.css" />
       <div class="ankh-wrapper">
         <div class="ankh-container">
           <span class="ankh-coin">☥</span>
@@ -14,7 +16,7 @@ class RightAnkhDropdown extends HTMLElement {
             <div>
               <div class="token-balance">⧉ ⊙ ⚸ ⊙ ⧉</div>
               <div class="dropdown-option">
-                <img src="./img/Uniswap_Logo.png" alt="Uni" class="dropdown-icon" />
+                <img src="${_rightAnkhBase}img/Uniswap_Logo.png" alt="Uni" class="dropdown-icon" />
                 <a href="https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433" target="_blank">
                   Buy/Sell on Uniswap
                 </a>
@@ -48,9 +50,9 @@ class RightAnkhDropdown extends HTMLElement {
 
       shareOption.innerHTML = `
         <span style="position: relative; display: inline-block; width: 22px; height: 22px; margin-right: 8px;">
-          <img src="./img/Ommm.png" alt="Ommm" style="height: 12px; position: absolute; top: -5px; left: 0px; opacity: 0.9; box-shadow: 0 0 6px #00e5ff; border-radius: 50%; z-index: 10000" />
-          <img src="./img/IPFS_Logo.png" alt="MetaMask" style="height: 16px; position: absolute; top: 4px; left: -10px; opacity: 0.6; z-index: 90000" />
-          <img src="./img/MetaMaskFox.png" alt="IPFS" style="height: 16px; position: absolute; top: 4px; left: 12px; opacity: 0.6; z-index: 8000" />
+          <img src="${_rightAnkhBase}img/Ommm.png" alt="Ommm" style="height: 12px; position: absolute; top: -5px; left: 0px; opacity: 0.9; box-shadow: 0 0 6px #00e5ff; border-radius: 50%; z-index: 10000" />
+          <img src="${_rightAnkhBase}img/IPFS_Logo.png" alt="MetaMask" style="height: 16px; position: absolute; top: 4px; left: -10px; opacity: 0.6; z-index: 90000" />
+          <img src="${_rightAnkhBase}img/MetaMaskFox.png" alt="IPFS" style="height: 16px; position: absolute; top: 4px; left: 12px; opacity: 0.6; z-index: 8000" />
         </span>
         <span style="flex-grow: 1;">Share Data</span>
         <label class="switch">
@@ -66,7 +68,7 @@ class RightAnkhDropdown extends HTMLElement {
 
       subscribeOption.innerHTML = `
         <span style="display: flex; align-items: center; gap: 4px; margin-right: 8px;">
-          <img src="./img/Ommm.png" alt="Ommm" style="height: 16px; vertical-align: middle; box-shadow: 0 0 6px #00e5ff; border-radius: 50%;" />
+          <img src="${_rightAnkhBase}img/Ommm.png" alt="Ommm" style="height: 16px; vertical-align: middle; box-shadow: 0 0 6px #00e5ff; border-radius: 50%;" />
           <span>0.42 Ommm</span>
         </span>
         <span style="flex-grow: 1;">Subscribe</span>
@@ -145,7 +147,7 @@ class RightAnkhDropdown extends HTMLElement {
 
       balanceDiv.innerHTML = `
         <span style="color:white; font-size:1.2rem;">
-          <img src="./img/Ommm.png" alt="Ommm" style="height:35px; vertical-align:middle; box-shadow: 0 0 6px #00e5ff; border-radius: 50%;" />
+          <img src="${_rightAnkhBase}img/Ommm.png" alt="Ommm" style="height:35px; vertical-align:middle; box-shadow: 0 0 6px #00e5ff; border-radius: 50%;" />
           ${formatted}
         </span>
       `;

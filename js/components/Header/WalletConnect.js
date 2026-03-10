@@ -1,1 +1,0 @@
-[Content from DecentMarket js/components/Header/WalletConnect.js]

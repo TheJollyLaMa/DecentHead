@@ -1,3 +1,5 @@
+const _subModalBase = new URL('../../', import.meta.url).href;
+
 class SubscriptionModal extends HTMLElement {
   constructor() {
     super();
@@ -17,7 +19,7 @@ class SubscriptionModal extends HTMLElement {
 
   render() {
     this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="../css/header.css" />
+      <link rel="stylesheet" href="${_subModalBase}css/header.css" />
       <div class="modal-overlay">
         <div class="modal-content">
           <span class="modal-close">✖</span>
@@ -25,7 +27,7 @@ class SubscriptionModal extends HTMLElement {
           <div class="subscription-tiers">
             <!-- Tier 1 -->
             <div class="subscription-card">
-              <img src="./img/IPFS_Logo.png" alt="Tier 1" />
+              <img src="${_subModalBase}img/IPFS_Logo.png" alt="Tier 1" />
               <h3>Tier 1: Donate</h3>
               <input type="number" placeholder="Enter donation amount" />
               <button>Donate with PayPal</button>
@@ -34,7 +36,7 @@ class SubscriptionModal extends HTMLElement {
 
             <!-- Tier 2 -->
             <div class="subscription-card">
-              <img src="./img/IPFS_Logo.png" alt="Tier 2" />
+              <img src="${_subModalBase}img/IPFS_Logo.png" alt="Tier 2" />
               <h3>Tier 2: Data Registry Access</h3>
               <p>$10/month</p>
               <button>Subscribe</button>
@@ -42,7 +44,7 @@ class SubscriptionModal extends HTMLElement {
 
             <!-- Tier 3 -->
             <div class="subscription-card">
-              <img src="./img/IPFS_Logo.png" alt="Tier 3" />
+              <img src="${_subModalBase}img/IPFS_Logo.png" alt="Tier 3" />
               <h3>Tier 3: Model Library Access</h3>
               <p>Includes Tier 2 + Data Models</p>
               <button>Subscribe</button>
