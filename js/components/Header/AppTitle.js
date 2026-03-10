@@ -1,0 +1,1 @@
+[Content from DecentMarket js/components/Header/AppTitle.js]
