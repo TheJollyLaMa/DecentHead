@@ -1,3 +1,5 @@
+const _ipfsBase = new URL('../../', import.meta.url).href;
+
 export class IPFSStatus extends HTMLElement {
   constructor() {
     super();
@@ -215,7 +217,7 @@ export class IPFSStatus extends HTMLElement {
       for (let i = 0; i < 4; i++) {
         const img = document.createElement('img');
         img.classList.add('ticker-letter');
-        img.src = 'img/IPFS_Logo.png';
+        img.src = `${_ipfsBase}img/IPFS_Logo.png`;
         img.style.width = '12px';
         img.style.height = '12px';
         tickerCircle.appendChild(img);
@@ -371,12 +373,12 @@ export class IPFSStatus extends HTMLElement {
 
   render() {
     this.shadowRoot.innerHTML = `
-      <link rel="stylesheet" href="../css/styles.css" />
-      <link rel="stylesheet" href="../css/header.css" />
+      <link rel="stylesheet" href="${_ipfsBase}css/styles.css" />
+      <link rel="stylesheet" href="${_ipfsBase}css/header.css" />
       <div id="ipfs-status" class="ipfs-disconnected">
         <div class="ticker-wrapper">
           <div id="ipfs-ticker-circle" class="ticker-circle-ipfs" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
-          <img id="ipfsIcon" src="img/IPFS_Logo.png" />
+          <img id="ipfsIcon" src="${_ipfsBase}img/IPFS_Logo.png" />
         </div>
         <div id="ipfsHoverPopup" class="hover-popup">
           <div id="hoverPopupContent">
