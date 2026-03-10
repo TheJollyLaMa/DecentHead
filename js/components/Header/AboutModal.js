@@ -1,1 +1,1 @@
-// Content of AboutModal.js
+[Content from DecentMarket js/components/Header/AboutModal.js]
