@@ -1,4 +1,4 @@
-const _appTitleBase = new URL('../../', import.meta.url).href;
+const _appTitleBase = new URL('../../../', import.meta.url).href;
 
 export class AppTitle extends HTMLElement {
   constructor() {
