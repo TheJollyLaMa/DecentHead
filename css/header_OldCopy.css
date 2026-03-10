@@ -1,0 +1,478 @@
+/* css/header.css – styles for DecentHead shadow DOM components */
+
+/* ─── Main header layout ─────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0a0a0a;
+  border-bottom: 1px solid #00e5ff44;
+  padding: 0 16px;
+  height: 100px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 20px #00e5ff33;
+}
+
+/* ─── IPFS Status ────────────────────────────────────────────── */
+#ipfs-status {
+  display: flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  width: 100px;
+  height: 100px;
+}
+
+.ipfs-disconnected #ipfsIcon {
+  opacity: 0.4;
+  filter: grayscale(100%);
+}
+
+.ipfs-connected #ipfsIcon {
+  opacity: 1;
+  filter: drop-shadow(0 0 6px #00e5ff);
+}
+
+#ipfsIcon {
+  width: 50px;
+  height: 50px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+/* ─── Ticker circles ─────────────────────────────────────────── */
+.ticker-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+}
+
+.ticker-circle-ipfs,
+.ticker-circle-metamask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid #00e5ff33;
+}
+
+.ticker-letter {
+  position: absolute;
+  font-size: 10px;
+  color: #00e5ff;
+  font-family: 'Courier New', monospace;
+  transform: translate(-50%, -50%);
+}
+
+.ticker-letter-logo {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+/* ─── Hover popup ────────────────────────────────────────────── */
+.hover-popup {
+  display: none;
+  position: absolute;
+  top: 104px;
+  left: 0;
+  background: #111;
+  border: 1px solid #00e5ff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-width: 220px;
+  z-index: 9999;
+  color: white;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+}
+
+.hover-popup a {
+  color: #00e5ff;
+  text-decoration: none;
+}
+
+.hover-popup a:hover {
+  text-decoration: underline;
+}
+
+.snapshot-today { color: #00e5ff; }
+.snapshot-old   { color: #aaa; }
+
+.snapshot-import-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.snapshot-import-wrapper input {
+  padding: 4px;
+  background: #222;
+  border: 1px solid #00e5ff;
+  color: white;
+  border-radius: 4px;
+}
+
+.snapshot-import-wrapper button {
+  background: #00e5ff;
+  color: black;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* ─── App Title / Center ─────────────────────────────────────── */
+#header-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#app-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+}
+
+.title-center {
+  text-align: center;
+}
+
+#app-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-family: 'Bungee', sans-serif;
+  color: #00e5ff;
+  text-shadow: 0 0 12px #00e5ff99;
+  white-space: nowrap;
+}
+
+#app-subtitle {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #aaa;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+}
+
+.title-symbol {
+  color: #7300ff;
+  font-size: 1rem;
+}
+
+.title-main {
+  color: #00e5ff;
+}
+
+.peacock-icon {
+  cursor: pointer;
+  font-size: 1.8rem;
+}
+
+/* ─── Ankh decorations ───────────────────────────────────────── */
+.ankh-left,
+.ankh-right {
+  display: flex;
+  align-items: center;
+}
+
+.ankh-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.ankh-container {
+  position: relative;
+  display: inline-block;
+}
+
+.ankh-coin {
+  font-size: 2rem;
+  cursor: pointer;
+  color: #00e5ff;
+  text-shadow: 0 0 8px #00e5ff99;
+  user-select: none;
+}
+
+/* ─── Sparkle animations ─────────────────────────────────────── */
+.sparkle {
+  position: absolute;
+  font-size: 0.6rem;
+  animation: sparkle-anim 2s infinite;
+  pointer-events: none;
+}
+
+.sparkle-top    { top: -8px;    left: 50%; transform: translateX(-50%); animation-delay: 0s;   }
+.sparkle-bottom { bottom: -8px; left: 50%; transform: translateX(-50%); animation-delay: 0.5s; }
+.sparkle-left   { left: -8px;   top: 50%;  transform: translateY(-50%); animation-delay: 1s;   }
+.sparkle-right  { right: -8px;  top: 50%;  transform: translateY(-50%); animation-delay: 1.5s; }
+
+@keyframes sparkle-anim {
+  0%, 100% { opacity: 1;   transform: scale(1);   }
+  50%       { opacity: 0.3; transform: scale(1.5); }
+}
+
+/* ─── Dropdown menus ─────────────────────────────────────────── */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 1px solid #00e5ff;
+  border-radius: 8px;
+  padding: 4px 0;
+  min-width: 210px;
+  z-index: 9999;
+  list-style: none;
+  margin: 0;
+}
+
+.dropdown-menu li,
+.dropdown-option {
+  padding: 8px 16px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-family: 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.dropdown-menu li:hover,
+.dropdown-option:hover {
+  background: #00e5ff22;
+}
+
+.dropdown-menu a {
+  color: #00e5ff;
+  text-decoration: none;
+}
+
+.dropdown-icon {
+  height: 16px;
+  vertical-align: middle;
+}
+
+.token-balance {
+  padding: 8px 16px;
+  color: #00e5ff;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* ─── Toggle switch ──────────────────────────────────────────── */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #444;
+  transition: 0.3s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  transition: 0.3s;
+}
+
+input:checked + .slider          { background: #00e5ff; }
+input:checked + .slider:before   { transform: translateX(16px); }
+
+.slider.round        { border-radius: 20px; }
+.slider.round:before { border-radius: 50%; }
+
+/* ─── Wallet connect ─────────────────────────────────────────── */
+#walletHeaderContainer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100px;
+}
+
+#walletIconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  width: 100px;
+  height: 100px;
+  justify-content: center;
+}
+
+.wallet-ticker {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.neon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+
+.neon-button.disconnected img {
+  opacity: 0.5;
+  filter: grayscale(80%);
+}
+
+.neon-button.connected img {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px #00e5ff);
+}
+
+.neon-button img {
+  width: 50px;
+  height: 50px;
+}
+
+#wallet-display {
+  color: #00e5ff;
+  font-size: 0.7rem;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+}
+
+.wallet-hover-display {
+  display: none;
+  position: absolute;
+  top: 104px;
+  right: 0;
+  background: #111;
+  border: 1px solid #00e5ff;
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 150px;
+  z-index: 9999;
+  color: white;
+  font-size: 12px;
+}
+
+/* ─── Subscription modal ─────────────────────────────────────── */
+.modal-overlay {
+  display: flex;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 99999;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: #111;
+  border: 2px solid #00e5ff;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 700px;
+  width: 90%;
+  color: white;
+  font-family: 'Courier New', monospace;
+  box-shadow: 0 0 20px #00e5ffaa;
+}
+
+.modal-close {
+  float: right;
+  cursor: pointer;
+  color: #00e5ff;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.subscription-tiers {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.subscription-card {
+  background: #1a1a1a;
+  border: 1px solid #00e5ff44;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  flex: 1;
+  min-width: 180px;
+}
+
+.subscription-card img {
+  height: 40px;
+  margin-bottom: 8px;
+}
+
+.subscription-card h3 {
+  color: #00e5ff;
+  font-size: 0.9rem;
+  margin: 8px 0;
+}
+
+.subscription-card p {
+  color: #aaa;
+  font-size: 0.8rem;
+}
+
+.subscription-card input {
+  width: 80%;
+  padding: 6px;
+  background: #222;
+  border: 1px solid #00e5ff;
+  color: white;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.subscription-card button {
+  display: block;
+  width: 100%;
+  background: #00e5ff;
+  color: black;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: 4px 0;
+  font-weight: bold;
+}

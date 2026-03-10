@@ -1,0 +1,21 @@
+/* css/styles.css – global base styles for DecentHead demo page */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0a0a0a;
+  color: white;
+  font-family: 'Courier New', monospace;
+}
+
+body {
+  padding-top: 100px; /* leave room for the fixed header */
+}
+
+a {
+  color: #00e5ff;
+}
