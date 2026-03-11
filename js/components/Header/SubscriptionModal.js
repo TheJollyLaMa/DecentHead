@@ -7,6 +7,7 @@ class SubscriptionModal extends HTMLElement {
   }
 
   connectedCallback() {
+    this.style.display = 'none';
     this.render();
     this.shadowRoot.querySelector('.modal-close').addEventListener('click', () => {
       this.style.display = 'none';
@@ -14,7 +15,7 @@ class SubscriptionModal extends HTMLElement {
   }
 
   open() {
-    this.style.display = 'flex';
+    this.style.display = 'block';
   }
 
   render() {

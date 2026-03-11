@@ -1,21 +1,291 @@
-/* css/styles.css – global base styles for DecentHead demo page */
-
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
 html, body {
   margin: 0;
   padding: 0;
-  background: #0a0a0a;
-  color: white;
-  font-family: 'Courier New', monospace;
 }
 
 body {
-  padding-top: 100px; /* leave room for the fixed header */
+  background: #000021;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
 }
 
-a {
+decent-header {
+  display: block;
+}
+
+decent-canvas {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 250px);
+  margin-top: 90px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 10;
+  border-bottom: 2px solid #0ff;
+}
+
+
+
+/* Ensure left and right toolbars are inside the canvas area and don't overlap header/footer */
+decent-left-toolbar,
+decent-right-toolbar {
+  position: fixed;
+  top: 110px;
+  bottom: 10px;
+  z-index: 1000;
+}
+
+decent-foot {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border: none;
+  box-shadow: none;
+  background: #000021;
+  z-index: 100;
+}
+
+
+
+#ipfsIconWrapper {
+  position: absolute;
+  left: 20px;
+  top: 5px;
+  text-align: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+.hover-popup {
+  display: none;
+  position: absolute;
+  top: 50px;
+  left: 45px; /* moved closer to the IPFS icon */
+  background: rgba(0, 0, 40, 0.95);
+  color: white;
+  padding: 8px;
+  border: 1px solid #00e5ff;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  min-width: 180px;
+  z-index: 9999 !important;
+  box-shadow: 0 0 8px #00e5ff;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+
+.snapshot-today {
+  color: #00ff99;
+  text-shadow: 0 0 6px #00ff99;
+}
+
+.snapshot-old {
   color: #00e5ff;
+  text-shadow: 0 0 6px #f8fe8a;
+}
+
+
+
+
+@keyframes shimmer-spin-y {
+  0% {
+    transform: rotateY(0deg);
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(2);
+  }
+  100% {
+    transform: rotateY(360deg);
+    filter: brightness(1);
+  }
+}
+
+@keyframes shimmer-spin {
+  0% {
+    transform: rotate(0deg);
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(2);
+  }
+  100% {
+    transform: rotate(360deg);
+    filter: brightness(1);
+  }
+}
+
+
+#ipfs-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  width: 60px;
+  height: 60px;
+  border: 2px solid #00e5ff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00e5ff;
+}
+#ipfsIcon {
+  display: block;
+  width: 50px;
+  height: 50px;
+  opacity: 0.9;
+  animation: shimmer-spin 8s linear infinite;
+  filter: drop-shadow(0 0 10px #00e5ff);
+  cursor: pointer;
+}
+
+#ipfs-status.ipfs-disconnected #ipfsIcon {
+  animation: none;
+  opacity: 0.6;
+  filter: grayscale(80%) drop-shadow(0 0 4px #00e5ff);
+}
+
+#ipfs-status.ipfs-connected #ipfsIcon {
+  animation: shimmer-spin 8s linear infinite;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 10px #00e5ff);
+}
+
+
+
+
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  padding: 0;
+  margin: 0;
+  margin-top: 120px;
+  margin-bottom: 80px;
+}
+
+#landing-bg {
+  width: auto;
+  height: 80vh;
+  object-fit: contain;
+  opacity: 0.8;
+  margin: 0;
+  z-index: -1;
+}
+
+footer {
+  display: none;
+  justify-content: space-around;
+  padding: 1rem;
+  background-color: #000010;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  opacity: 0.8;
+  z-index: 10000;
+}
+
+.round-button {
+  background: transparent;
+  border: 2px solid #00e5ff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 0 0 10px #00e5ff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.round-button:hover {
+  box-shadow: 0 0 20px #00ffff;
+  border-color: #00ffff;
+}
+
+.round-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Modal hidden helper */
+.modal-hidden {
+  display: none;
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Modal overlay for modals with overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 40, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000;
+}
+
+/* General modal style for overlay modals */
+.modal {
+  background-color: rgba(0, 0, 50, 0.95);
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: #fff;
+  box-shadow: 0 0 20px #00e5ff;
+  position: relative;
+  z-index: 100001;
+}
+
+.modal-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 1rem;
+  background: transparent;
+  color: #fff;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+#modal button[type="submit"] {
+  margin-top: 1rem;
+  background-color: #00e5ff;
+  color: #000;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+
+
+.round-button.active {
+  box-shadow: 0 0 20px #00ffcc;
+  border-color: #00ffcc;
+}
+
+
+decent-ui-layer decent-left-toolbar,
+decent-ui-layer decent-right-toolbar {
+  pointer-events: auto;
 }
