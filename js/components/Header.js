@@ -1,6 +1,12 @@
+const _headerBase = new URL('../../', import.meta.url).href;
+
 import './Header/IPFSStatus.js';
 import './Header/AppTitle.js';
 import './Header/WalletConnect.js';
+import './Header/RightAnkhDropdown.js';
+import './Header/AboutModal.js';
+import './Header/SubscriptionModal.js';
+import './Header/IPFSWaitingModal.js';
 
 class DecentHeader extends HTMLElement {
   constructor() {
@@ -26,15 +32,14 @@ class DecentHeader extends HTMLElement {
 
   render() {
     this.shadowRoot.innerHTML = `
-        <link rel="stylesheet" href="css/styles.css" />
-        <link rel="stylesheet" href="css/header.css" />
+        <link rel="stylesheet" href="${_headerBase}css/styles.css" />
+        <link rel="stylesheet" href="${_headerBase}css/header.css" />
         <header>
             <ipfs-status></ipfs-status>
             <app-title></app-title>
             <wallet-connect></wallet-connect>
         </header>
     `;
-    // Removed: global waitingModal DOM injection. Modal is managed by IPFSStatus shadow DOM only.
   }
 }
 
