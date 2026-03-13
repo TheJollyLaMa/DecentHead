@@ -7,6 +7,12 @@ class RightAnkhDropdown extends HTMLElement {
   }
 
   connectedCallback() {
+    const cfg = window.DECENT_CONFIG || {};
+    this._uniswapUrl = cfg.uniswapUrl ||
+      'https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433';
+    this._tokenSymbol = cfg.tokenSymbol || 'Ommm';
+    this._tokenAddress = cfg.tokenAddress || '0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433';
+
     this.shadowRoot.innerHTML = `
       <link rel="stylesheet" href="${_rightAnkhBase}css/header.css" />
       <div class="ankh-wrapper">
@@ -17,8 +23,8 @@ class RightAnkhDropdown extends HTMLElement {
               <div class="token-balance">⧉ ⊙ ⚸ ⊙ ⧉</div>
               <div class="dropdown-option">
                 <img src="${_rightAnkhBase}img/Uniswap_Logo.png" alt="Uni" class="dropdown-icon" />
-                <a href="https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433" target="_blank">
-                  Buy/Sell on Uniswap
+                <a href="${this._uniswapUrl}" target="_blank">
+                  Buy/Sell ${this._tokenSymbol} on Uniswap
                 </a>
               </div>
             </div>
@@ -36,6 +42,8 @@ class RightAnkhDropdown extends HTMLElement {
 
   async setupDropdown() {
     const ethers = window.ethers;
+    const tokenAddress = this._tokenAddress;
+    const tokenSymbol = this._tokenSymbol;
 
     const container = this.shadowRoot.querySelector('.ankh-coin');
     const popup = this.shadowRoot.querySelector('.dropdown-menu.right-ankh-menu');
@@ -130,7 +138,7 @@ class RightAnkhDropdown extends HTMLElement {
       const address = signer.address;
 
       const ommm = new ethers.Contract(
-        '0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433',
+        tokenAddress,
         [
           "function balanceOf(address owner) view returns (uint256)",
           "function decimals() view returns (uint8)"
@@ -147,8 +155,8 @@ class RightAnkhDropdown extends HTMLElement {
 
       balanceDiv.innerHTML = `
         <span style="color:white; font-size:1.2rem;">
-          <img src="${_rightAnkhBase}img/Ommm.png" alt="Ommm" style="height:35px; vertical-align:middle; box-shadow: 0 0 6px #00e5ff; border-radius: 50%;" />
-          ${formatted}
+          <img src="${_rightAnkhBase}img/Ommm.png" alt="${tokenSymbol}" style="height:35px; vertical-align:middle; box-shadow: 0 0 6px #00e5ff; border-radius: 50%;" />
+          ${formatted} ${tokenSymbol}
         </span>
       `;
     } catch (err) {
