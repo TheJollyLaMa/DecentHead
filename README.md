@@ -65,3 +65,48 @@ All CSS and image URLs inside shadow roots are constructed with `import.meta.url
 - [ethers.js v6](https://docs.ethers.org/) – wallet & contract interactions
 - [W3Up browser client](https://web3.storage/) – IPFS storage
 - [Bungee font](https://fonts.google.com/specimen/Bungee) – Google Fonts
+
+## White-Label Configuration
+
+All user-facing strings and DeFi parameters are controlled through a single file,
+`decent.config.js`, which is loaded in `index.html` before the component scripts.
+
+### Quick start
+
+1. Open `decent.config.js` in the project root.
+2. Edit the values you want to change and save the file.
+3. Reload the page — no build step required.
+
+### Available keys
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `appName` | `string` | `'Decent Header'` | Main title displayed in the header |
+| `subtitle` | `string` | `'(Another Decent Frankenstein)'` | Tagline below the title |
+| `tokenAddress` | `string` | Ommm contract address | ERC-20 contract used for balance lookup |
+| `tokenSymbol` | `string` | `'Ommm'` | Symbol shown next to the balance |
+| `uniswapUrl` | `string` | Ommm Uniswap page | DEX URL in the right-ankh menu & About modal |
+| `enableIPFS` | `boolean` | `true` | Show / hide the IPFS status bar |
+| `enableShareData` | `boolean` | `true` | Show / hide the "Share Data" toggle |
+| `enableSubscription` | `boolean` | `true` | Show / hide the "Subscribe" toggle & modal |
+
+### Example: renaming the app for a fork
+
+```js
+window.DECENT_CONFIG = {
+  appName: 'My Web3 Hub',
+  subtitle: 'Powered by Decent Head',
+  tokenAddress: '0xYourTokenAddressHere',
+  tokenSymbol: 'MYT',
+  uniswapUrl: 'https://app.uniswap.org/explore/tokens/polygon/0xYourTokenAddressHere',
+  enableIPFS: true,
+  enableShareData: false,
+  enableSubscription: false,
+};
+```
+
+### Backward compatibility
+
+The config file is entirely optional. If `decent.config.js` is not loaded, or if
+any individual key is omitted, every component falls back to its built-in default,
+so the project continues to work exactly as before.

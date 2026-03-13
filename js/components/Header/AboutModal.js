@@ -23,6 +23,12 @@ class AboutModal extends HTMLElement {
   }
 
   render() {
+    const cfg = window.DECENT_CONFIG || {};
+    const uniswapUrl = cfg.uniswapUrl ||
+      'https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433';
+    const tokenSymbol = cfg.tokenSymbol || 'Ommm';
+    const appName = cfg.appName || 'Decent Header';
+
     this.shadowRoot.innerHTML = `
       <style>
         .modal-container {
@@ -88,7 +94,7 @@ class AboutModal extends HTMLElement {
       <div class="modal-container">
         <div class="modal-box">
           <button class="close-btn" id="close-about">Close</button>
-          <h2>🦚 About Decent Head 🦚</h2>
+          <h2>🦚 About ${appName} 🦚</h2>
 
           <div class="about-section">
             <p>This project is part of the <strong>Decent Agency and Decent Smart Home</strong> suite of web3-powered tools and interfaces.</p>
@@ -106,7 +112,7 @@ class AboutModal extends HTMLElement {
             <ul>
               <li><img src="${_aboutBase}img/IPFS_Logo.png"/> <a href="https://w3s.link" target="_blank">Web3.Storage Console</a></li>
               <li><img src="${_aboutBase}img/MetaMaskFox.png"/> <a href="https://metamask.io/" target="_blank">MetaMask</a></li>
-              <li><img src="${_aboutBase}img/Ommm.png"/> <a href="https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433" target="_blank">Buy Ommm on Uniswap</a></li>
+              <li><img src="${_aboutBase}img/Ommm.png"/> <a href="${uniswapUrl}" target="_blank">Buy ${tokenSymbol} on Uniswap</a></li>
             </ul>
           </div>
 
@@ -114,7 +120,7 @@ class AboutModal extends HTMLElement {
             <h3>✨ Features:</h3>
             <ul>
               <li>IPFS data storage with W3Up</li>
-              <li>Token-rewarded data sharing (Ommm)</li>
+              <li>Token-rewarded data sharing (${tokenSymbol})</li>
               <li>MetaMask integration & token balance display</li>
               <li>Expandable dropdowns and subscription options</li>
               <li>Right-Ankh integrates your website with ERC standards for further web3 infrastructural development.</li>

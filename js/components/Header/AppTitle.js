@@ -47,6 +47,16 @@ export class AppTitle extends HTMLElement {
   }
 
   render() {
+    const cfg = window.DECENT_CONFIG || {};
+    const appName = cfg.appName || 'Decent Header';
+    const subtitle = cfg.subtitle || '(Another Decent Frankenstein)';
+    // Split appName at the first space to place each word in a styled span,
+    // mirroring the original "Decent … Header" layout.
+    // For single-word names the peacock icon is simply appended at the end.
+    const spaceIndex = appName.indexOf(' ');
+    const nameLeft = spaceIndex >= 0 ? appName.slice(0, spaceIndex) : appName;
+    const nameRight = spaceIndex >= 0 ? appName.slice(spaceIndex + 1) : '';
+
     this.shadowRoot.innerHTML = `
 <link rel="stylesheet" href="${_appTitleBase}css/header.css" />
 <div id="header-center">
@@ -70,10 +80,10 @@ export class AppTitle extends HTMLElement {
     <div class="title-center">
       <h1 id="app-title">
         <span class="title-symbol">::-⊡-</span>
-        <span class="title-main"> Decent</span> <span class="peacock-icon" style="cursor: pointer;">🦚</span> <span class="title-main"> Header </span>
+        <span class="title-main"> ${nameLeft}</span> <span class="peacock-icon" style="cursor: pointer;">🦚</span>${nameRight ? ` <span class="title-main"> ${nameRight} </span>` : ' '}
         <span class="title-symbol">-⊡-::</span>
       </h1>
-      <h3 id="app-subtitle">(Another Decent Frankenstein)</h3>
+      <h3 id="app-subtitle">${subtitle}</h3>
     </div>
 
     <div class="ankh-right">
