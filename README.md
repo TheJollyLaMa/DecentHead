@@ -2,6 +2,7 @@
 
 > **Drop-in web3 header for static HTML projects** — MetaMask wallet connection + IPFS storage, zero build step.
 
+[![Version](https://img.shields.io/badge/version-v1.0.0-brightgreen?style=flat-square)](https://github.com/TheJollyLaMa/DecentHead/releases/tag/v1.0.0)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-00e5ff?style=flat-square)](https://thejollylama.github.io/DecentHead/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 
@@ -11,16 +12,16 @@
 
 **Decent Head** is a forkable, single-file-drop web3 header component (`<decent-header>`) built for the [Decent Agency](https://github.com/TheJollyLaMa) suite of decentralized applications — but designed to be generic enough for *any* static website that wants a web3 foundation.
 
-### v1 Goals
+### v1.0.0 Goals
 
-In this first release, the goals are intentionally focused:
+In this first stable release, the goals are intentionally focused:
 
 | Goal | Status |
 |---|---|
-| 🦊 Connect a MetaMask wallet & display the address | ✅ v1 |
-| 📡 Connect to IPFS via Web3.Storage (W3Up) | ✅ v1 |
-| 🏷️ White-label branding via a single config file | ✅ v1 |
-| 📂 Left & right ankh (☥) dropdown menus | ✅ v1 |
+| 🦊 Connect a MetaMask wallet & display the address | ✅ v1.0.0 |
+| 📡 Connect to IPFS via Web3.Storage (W3Up) | ✅ v1.0.0 |
+| 🏷️ White-label branding via a single config file | ✅ v1.0.0 |
+| 📂 Left & right ankh (☥) dropdown menus | ✅ v1.0.0 |
 | 🔮 ERC-20 token balances, Uniswap, liquidity pools | 🛣️ Future |
 | 💎 Subscription tiers & token-rewarded data sharing | 🛣️ Future |
 
@@ -149,7 +150,7 @@ All user-facing strings and feature flags live in one file. Every key is optiona
 | `enableShareData` | `boolean` | `true` | Show / hide the "Share Data" toggle |
 | `enableSubscription` | `boolean` | `true` | Show / hide the "Subscribe" toggle & modal |
 
-> **Future config keys** (`tokenAddress`, `tokenSymbol`, `uniswapUrl`) are recognised by the config loader but not yet surfaced in the v1 UI. They are documented in the file itself for forward compatibility.
+> **Future config keys** (`tokenAddress`, `tokenSymbol`, `uniswapUrl`) are recognised by the config loader but not yet surfaced in the v1.0.0 UI. They are documented in the file itself for forward compatibility.
 
 ---
 
@@ -201,3 +202,9 @@ Please keep PRs scoped to one concern. The project values simplicity: no bundler
 
 This project is released under the [MIT License](LICENSE).  
 Built with ❣️💗❣️ by ⚕️ 🦚 ⚸ The Jolly LaMa & The RoboSoul 🤖 🦚 ⚕️
+
+---
+
+## 📋 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the full release history.

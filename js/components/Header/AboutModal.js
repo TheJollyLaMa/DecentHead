@@ -100,7 +100,7 @@ class AboutModal extends HTMLElement {
 
           <div class="about-section">
             <p>This project is part of the <strong>Decent Agency and Decent Smart Home</strong> suite of web3-powered tools and interfaces.</p>
-            <p><strong>${appName}</strong> is a drop-in, forkable web3 header designed to give any static website a decentralized foundation. In this v1 release the focus is simple: connect your <strong>MetaMask wallet</strong> and connect to <strong>IPFS</strong> via Web3.Storage — two pillars of the open, decentralized web.</p>
+            <p><strong>${appName}</strong> is a drop-in, forkable web3 header designed to give any static website a decentralized foundation. In this <strong>v1.0.0</strong> release the focus is simple: connect your <strong>MetaMask wallet</strong> and connect to <strong>IPFS</strong> via Web3.Storage — two pillars of the open, decentralized web.</p>
             <p>It leverages the <strong>Web3.Storage (W3Up)</strong> service for IPFS data storage and retrieval, and integrates with <strong>MetaMask</strong> for wallet connectivity.</p>
             <p>Decent Head is meant to be forked, cloned, and customized. It is a living submodule — a generic starting point for your organization's decentralized web3 journey. Drop it into any static HTML project and you are ready to go.</p>
           </div>
@@ -114,7 +114,7 @@ class AboutModal extends HTMLElement {
           </div>
 
           <div class="about-section">
-            <h3>✨ v1 Features:</h3>
+            <h3>✨ v1.0.0 Features:</h3>
             <ul>
               <li>🦊 MetaMask wallet connection & address display</li>
               <li>📡 IPFS data storage & retrieval with W3Up</li>
