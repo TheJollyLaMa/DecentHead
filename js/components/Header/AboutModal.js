@@ -24,9 +24,6 @@ class AboutModal extends HTMLElement {
 
   render() {
     const cfg = window.DECENT_CONFIG || {};
-    const uniswapUrl = cfg.uniswapUrl ||
-      'https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433';
-    const tokenSymbol = cfg.tokenSymbol || 'Ommm';
     const appName = cfg.appName || 'Decent Header';
 
     this.shadowRoot.innerHTML = `
@@ -90,6 +87,11 @@ class AboutModal extends HTMLElement {
           from { opacity: 0; transform: translateY(-20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        .future-note {
+          margin-top: 1em;
+          font-size: 0.85em;
+          color: #aaa;
+        }
       </style>
       <div class="modal-container">
         <div class="modal-box">
@@ -98,13 +100,9 @@ class AboutModal extends HTMLElement {
 
           <div class="about-section">
             <p>This project is part of the <strong>Decent Agency and Decent Smart Home</strong> suite of web3-powered tools and interfaces.</p>
-            <p>It is designed to provide a decentralized, token-rewarded data sharing platform using IPFS and the network of the Ethereum Virtual Machine.</p>
-            <p>Decent Head is a simple, yet powerful, web3 interface that allows users to interact with IPFS data storage and share their data in a decentralized manner.</p>
-            <p>It leverages the <strong>Web3.Storage</strong> service for IPFS data storage and retrieval, and integrates with <strong>MetaMask</strong> for wallet connectivity.</p>
-            <p>Decent Head is distributed via the Decent NFT contract. It is meant to be forked, cloned, and customized.  The Decent head may also be resold after some noticable changes are made that claim it as your own.  Royalties are appreciated during the legitimate resale via the Decent NFT contract.  Decent Head is a living submodule meant to be a generic start to your organization's decentralized web3 journey.</p>
-
-            <p>Purchase the latest rollout of Decent Head for the latest features and updates and use its codebase for a template or submodule in your organization's web3 hub.  Your community members will then begin their journey of deciding what data is valuable to them and how valuable it is - internally, externally, and both together!</p>
-
+            <p><strong>${appName}</strong> is a drop-in, forkable web3 header designed to give any static website a decentralized foundation. In this v1 release the focus is simple: connect your <strong>MetaMask wallet</strong> and connect to <strong>IPFS</strong> via Web3.Storage — two pillars of the open, decentralized web.</p>
+            <p>It leverages the <strong>Web3.Storage (W3Up)</strong> service for IPFS data storage and retrieval, and integrates with <strong>MetaMask</strong> for wallet connectivity.</p>
+            <p>Decent Head is meant to be forked, cloned, and customized. It is a living submodule — a generic starting point for your organization's decentralized web3 journey. Drop it into any static HTML project and you are ready to go.</p>
           </div>
 
           <div class="about-section">
@@ -112,20 +110,21 @@ class AboutModal extends HTMLElement {
             <ul>
               <li><img src="${_aboutBase}img/IPFS_Logo.png"/> <a href="https://w3s.link" target="_blank">Web3.Storage Console</a></li>
               <li><img src="${_aboutBase}img/MetaMaskFox.png"/> <a href="https://metamask.io/" target="_blank">MetaMask</a></li>
-              <li><img src="${_aboutBase}img/Ommm.png"/> <a href="${uniswapUrl}" target="_blank">Buy ${tokenSymbol} on Uniswap</a></li>
             </ul>
           </div>
 
           <div class="about-section">
-            <h3>✨ Features:</h3>
+            <h3>✨ v1 Features:</h3>
             <ul>
-              <li>IPFS data storage with W3Up</li>
-              <li>Token-rewarded data sharing (${tokenSymbol})</li>
-              <li>MetaMask integration & token balance display</li>
-              <li>Expandable dropdowns and subscription options</li>
-              <li>Right-Ankh integrates your website with ERC standards for further web3 infrastructural development.</li>
-              <li>Left-Ankh organizes your liquidity pool and collective data sharing paradigm with your community.</li>
+              <li>🦊 MetaMask wallet connection & address display</li>
+              <li>📡 IPFS data storage & retrieval with W3Up</li>
+              <li>🏷️ Configurable app name, subtitle, and branding via <code>decent.config.js</code></li>
+              <li>📂 Expandable left &amp; right ankh (☥) dropdown menus</li>
+              <li>🌐 Pure static HTML — no build step required</li>
             </ul>
+            <p class="future-note">
+              🔮 <em>Coming in future releases: ERC-20 token balance display, Uniswap DEX integration, liquidity pool tooling, subscription tiers, and token-rewarded data sharing. Stay tuned!</em>
+            </p>
           </div>
 
           <div class="about-section">
