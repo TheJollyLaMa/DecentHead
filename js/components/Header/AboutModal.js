@@ -3,11 +3,10 @@ const _aboutBase = new URL('../../../', import.meta.url).href;
 // ── DecentEscrow purchase constants ──────────────────────────────────────────
 const ESCROW_ADDRESS   = '0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e';
 const USDC_ADDRESS     = '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85'; // USDC on Optimism
-// Escrow listing ID 0 = the first listing created on DecentEscrow (DecentHead v1.0.0 token, NFT tokenId 0)
-const LISTING_ID       = 0;
 const OPTIMISM_CHAIN_ID = 10n; // numeric chainId for Optimism Mainnet
 
 const ESCROW_ABI = [
+  'function nextListingId() view returns (uint256)',
   'function getListing(uint256 listingId) view returns (tuple(address nftContract, uint256 tokenId, uint256 priceETH, address priceToken, uint256 priceAmount, uint256 available, bool active, string note))',
   'function purchaseWithToken(uint256 listingId, uint256 amount)',
 ];
@@ -24,15 +23,14 @@ class AboutModal extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log("AboutModal connected");
     console.log('📦 AboutModal connected to DOM');
     this.render();
   }
 
   open() {
-    console.log("AboutModal open() called");
     console.log('📬 AboutModal.open() triggered');
     this.shadowRoot.querySelector('.modal-container').style.display = 'block';
+    this._loadDecentHeadListings();
   }
 
   close() {
@@ -40,10 +38,79 @@ class AboutModal extends HTMLElement {
   }
 
   // ── Escrow purchase flow ──────────────────────────────────────────────────
-  async _handleBuy() {
-    const statusEl = this.shadowRoot.getElementById('buy-status');
-    const btn      = this.shadowRoot.getElementById('buy-now-btn');
+  async _loadDecentHeadListings() {
+    const container = this.shadowRoot.getElementById('buy-cards');
+    const statusEl  = this.shadowRoot.getElementById('buy-status');
 
+    container.innerHTML = '<p style="color:#aaa;font-size:0.85em;">⏳ Loading available editions…</p>';
+
+    try {
+      const ethers = window.ethers;
+      if (!ethers || !window.ethereum) {
+        container.innerHTML = '<p style="color:#aaa;font-size:0.85em;">Connect MetaMask to see live availability.</p>';
+        return;
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const escrow   = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, provider);
+
+      const count = Number(await escrow.nextListingId());
+
+      const raws = await Promise.all(
+        Array.from({ length: count }, (_, i) => escrow.getListing(i))
+      );
+
+      const matched = raws
+        .map((raw, i) => ({
+          id:          i,
+          nftContract: raw[0],
+          tokenId:     raw[1],
+          priceETH:    raw[2],
+          priceToken:  raw[3],
+          priceAmount: raw[4],
+          available:   raw[5],
+          active:      raw[6],
+          note:        raw[7],
+        }))
+        .filter(l =>
+          l.active &&
+          l.available > 0n &&
+          l.note.toLowerCase().includes('decenthead')
+        );
+
+      if (matched.length === 0) {
+        container.innerHTML = '<p style="color:#aaa;font-size:0.85em;">No editions currently listed — check back soon.</p>';
+        return;
+      }
+
+      container.innerHTML = matched.map(l => {
+        const priceUSD = (Number(l.priceAmount) / 1e6).toFixed(2);
+        return `
+          <div class="buy-card">
+            <div class="buy-card-label">${l.note}</div>
+            <div class="buy-card-supply">${l.available} available</div>
+            <button class="buy-btn" data-listing-id="${l.id}" data-price="${l.priceAmount.toString()}">
+              🎟️ Buy Now — $${priceUSD} USDC
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const listingId = parseInt(btn.dataset.listingId);
+          const price     = BigInt(btn.dataset.price);
+          this._handleBuy(listingId, price, btn, statusEl);
+        });
+      });
+
+    } catch (err) {
+      console.warn('_loadDecentHeadListings failed:', err);
+      container.innerHTML = '<p style="color:#aaa;font-size:0.85em;">Could not load listings — please refresh.</p>';
+    }
+  }
+
+  async _handleBuy(listingId, price, btn, statusEl) {
     const setStatus = (msg, color = '#aaa') => {
       statusEl.style.color = color;
       statusEl.textContent = msg;
@@ -94,41 +161,39 @@ class AboutModal extends HTMLElement {
         }
         // Re-create provider after chain switch
         const freshProvider = new ethers.BrowserProvider(window.ethereum);
-        await this._doPurchase(freshProvider, ethers, btn, setStatus);
+        await this._doPurchase(freshProvider, ethers, listingId, price, btn, setStatus);
         return;
       }
 
-      await this._doPurchase(provider, ethers, btn, setStatus);
+      await this._doPurchase(provider, ethers, listingId, price, btn, setStatus);
     } catch (err) {
       btn.disabled = false;
-      btn.textContent = '🎟️ Buy Now — $100 USDC';
+      btn.textContent = '🎟️ Buy Now';
       setStatus(`⚠ ${err.reason || err.message || 'Unknown error'}`, '#ff4444');
     }
   }
 
-  async _doPurchase(provider, ethers, btn, setStatus) {
+  async _doPurchase(provider, ethers, listingId, price, btn, setStatus) {
     const signer = await provider.getSigner();
     const buyer  = signer.address;
 
     // Verify listing is active
     setStatus('⏳ Checking listing…');
     const escrow = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
-    const listing = await escrow.getListing(LISTING_ID);
+    const listing = await escrow.getListing(listingId);
 
     if (!listing.active) {
       btn.disabled = false;
-      btn.textContent = '🎟️ Buy Now — $100 USDC';
+      btn.textContent = '🎟️ Buy Now';
       setStatus('⚠ This listing is no longer active.', '#ff8800');
       return;
     }
     if (listing.available === BigInt(0)) {
       btn.disabled = false;
-      btn.textContent = '🎟️ Buy Now — $100 USDC';
+      btn.textContent = '🎟️ Buy Now';
       setStatus('⚠ Sold out — no tokens remaining.', '#ff8800');
       return;
     }
-
-    const price = listing.priceAmount; // 100_000_000 (6 decimals)
 
     // Approve USDC if needed
     setStatus('⏳ Checking USDC allowance…');
@@ -146,7 +211,7 @@ class AboutModal extends HTMLElement {
     // Purchase
     setStatus('⏳ Confirm purchase in MetaMask…');
     btn.textContent = '⏳ Purchasing…';
-    const purchaseTx = await escrow.purchaseWithToken(LISTING_ID, 1);
+    const purchaseTx = await escrow.purchaseWithToken(listingId, 1);
     setStatus('⏳ Waiting for purchase confirmation…');
     await purchaseTx.wait();
 
@@ -156,6 +221,9 @@ class AboutModal extends HTMLElement {
       `✅ Success! DNFT transferred to your wallet. Tx: ${purchaseTx.hash.slice(0, 10)}…`,
       '#00e5ff'
     );
+
+    // Refresh all listing cards
+    this._loadDecentHeadListings();
   }
 
   render() {
@@ -240,10 +308,24 @@ class AboutModal extends HTMLElement {
           color: #cc88ff;
           margin-top: 0;
         }
-        .supply-counter {
-          font-size: 0.9em;
+        .buy-card {
+          margin: 0.8em auto;
+          padding: 0.8em 1em;
+          border: 1px solid #8b00ff55;
+          border-radius: 10px;
+          background: #120028;
+          max-width: 420px;
+        }
+        .buy-card-label {
+          font-size: 0.95em;
+          color: #cc88ff;
+          margin-bottom: 0.3em;
+          font-weight: bold;
+        }
+        .buy-card-supply {
+          font-size: 0.82em;
           color: #aaa;
-          margin: 0.4em 0 1em;
+          margin-bottom: 0.6em;
         }
         .buy-btn {
           display: inline-block;
@@ -298,8 +380,7 @@ class AboutModal extends HTMLElement {
 
           <div class="buy-section">
             <h3>🎟️ Own a Piece of Web3 History</h3>
-            <p class="supply-counter">10 available now &nbsp;·&nbsp; 100 total &nbsp;·&nbsp; $100 USDC each</p>
-            <button class="buy-btn" id="buy-now-btn">🎟️ Buy Now — $100 USDC</button>
+            <div id="buy-cards">⏳ Loading…</div>
             <div id="buy-status"></div>
             <p class="escrow-note">
               Sold via <a href="https://optimistic.etherscan.io/address/0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e" target="_blank" rel="noopener">DecentEscrow on Optimism</a> — instant, trustless, on-chain.
@@ -337,7 +418,6 @@ class AboutModal extends HTMLElement {
     `;
 
     this.shadowRoot.getElementById('close-about').addEventListener('click', () => this.close());
-    this.shadowRoot.getElementById('buy-now-btn').addEventListener('click', () => this._handleBuy());
   }
 }
 
