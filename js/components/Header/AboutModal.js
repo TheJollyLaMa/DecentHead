@@ -1,5 +1,22 @@
 const _aboutBase = new URL('../../../', import.meta.url).href;
 
+// ── DecentEscrow purchase constants ──────────────────────────────────────────
+const ESCROW_ADDRESS   = '0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e';
+const USDC_ADDRESS     = '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85'; // USDC on Optimism
+// Escrow listing ID 0 = the first listing created on DecentEscrow (DecentHead v1.0.0 token, NFT tokenId 0)
+const LISTING_ID       = 0;
+const OPTIMISM_CHAIN_ID = 10n; // numeric chainId for Optimism Mainnet
+
+const ESCROW_ABI = [
+  'function getListing(uint256 listingId) view returns (tuple(address nftContract, uint256 tokenId, uint256 priceETH, address priceToken, uint256 priceAmount, uint256 available, bool active, string note))',
+  'function purchaseWithToken(uint256 listingId, uint256 amount)',
+];
+
+const ERC20_ABI = [
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+];
+
 class AboutModal extends HTMLElement {
   constructor() {
     super();
@@ -20,6 +37,125 @@ class AboutModal extends HTMLElement {
 
   close() {
     this.shadowRoot.querySelector('.modal-container').style.display = 'none';
+  }
+
+  // ── Escrow purchase flow ──────────────────────────────────────────────────
+  async _handleBuy() {
+    const statusEl = this.shadowRoot.getElementById('buy-status');
+    const btn      = this.shadowRoot.getElementById('buy-now-btn');
+
+    const setStatus = (msg, color = '#aaa') => {
+      statusEl.style.color = color;
+      statusEl.textContent = msg;
+    };
+
+    if (!window.ethereum) {
+      setStatus('⚠ MetaMask not found. Please install it to buy on-chain.', '#ff8800');
+      return;
+    }
+    const ethers = window.ethers;
+    if (!ethers) {
+      setStatus('⚠ ethers.js not loaded.', '#ff8800');
+      return;
+    }
+
+    try {
+      btn.disabled = true;
+      btn.textContent = '⏳ Connecting wallet…';
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+
+      // Ensure we're on Optimism
+      const network = await provider.getNetwork();
+      if (network.chainId !== OPTIMISM_CHAIN_ID) {
+        setStatus('⏳ Switching to Optimism…');
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0xa' }],
+          });
+        } catch (switchErr) {
+          // Chain not added — add it
+          if (switchErr.code === 4902) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: '0xa',
+                chainName: 'Optimism Mainnet',
+                nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                rpcUrls: ['https://mainnet.optimism.io'],
+                blockExplorerUrls: ['https://optimistic.etherscan.io'],
+              }],
+            });
+          } else {
+            throw switchErr;
+          }
+        }
+        // Re-create provider after chain switch
+        const freshProvider = new ethers.BrowserProvider(window.ethereum);
+        await this._doPurchase(freshProvider, ethers, btn, setStatus);
+        return;
+      }
+
+      await this._doPurchase(provider, ethers, btn, setStatus);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = '🎟️ Buy Now — $100 USDC';
+      setStatus(`⚠ ${err.reason || err.message || 'Unknown error'}`, '#ff4444');
+    }
+  }
+
+  async _doPurchase(provider, ethers, btn, setStatus) {
+    const signer = await provider.getSigner();
+    const buyer  = signer.address;
+
+    // Verify listing is active
+    setStatus('⏳ Checking listing…');
+    const escrow = new ethers.Contract(ESCROW_ADDRESS, ESCROW_ABI, signer);
+    const listing = await escrow.getListing(LISTING_ID);
+
+    if (!listing.active) {
+      btn.disabled = false;
+      btn.textContent = '🎟️ Buy Now — $100 USDC';
+      setStatus('⚠ This listing is no longer active.', '#ff8800');
+      return;
+    }
+    if (listing.available === BigInt(0)) {
+      btn.disabled = false;
+      btn.textContent = '🎟️ Buy Now — $100 USDC';
+      setStatus('⚠ Sold out — no tokens remaining.', '#ff8800');
+      return;
+    }
+
+    const price = listing.priceAmount; // 100_000_000 (6 decimals)
+
+    // Approve USDC if needed
+    setStatus('⏳ Checking USDC allowance…');
+    const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, signer);
+    const allowance = await usdc.allowance(buyer, ESCROW_ADDRESS);
+
+    if (allowance < price) {
+      setStatus('⏳ Approving USDC (confirm in MetaMask)…');
+      btn.textContent = '⏳ Approving…';
+      const approveTx = await usdc.approve(ESCROW_ADDRESS, price);
+      setStatus('⏳ Waiting for approval confirmation…');
+      await approveTx.wait();
+    }
+
+    // Purchase
+    setStatus('⏳ Confirm purchase in MetaMask…');
+    btn.textContent = '⏳ Purchasing…';
+    const purchaseTx = await escrow.purchaseWithToken(LISTING_ID, 1);
+    setStatus('⏳ Waiting for purchase confirmation…');
+    await purchaseTx.wait();
+
+    btn.disabled = false;
+    btn.textContent = '✅ Purchased!';
+    setStatus(
+      `✅ Success! DNFT transferred to your wallet. Tx: ${purchaseTx.hash.slice(0, 10)}…`,
+      '#00e5ff'
+    );
   }
 
   render() {
@@ -117,20 +253,32 @@ class AboutModal extends HTMLElement {
           font-size: 1.1rem;
           padding: 12px 28px;
           border-radius: 10px;
-          text-decoration: none;
+          border: none;
+          cursor: pointer;
           letter-spacing: 0.04em;
           box-shadow: 0 0 16px #8b00ff88;
           transition: box-shadow 0.2s, transform 0.1s;
+          font-family: 'Courier New', monospace;
         }
-        .buy-btn:hover {
+        .buy-btn:hover:not(:disabled) {
           box-shadow: 0 0 28px #00e5ffaa;
           transform: translateY(-2px);
-          text-decoration: none;
+        }
+        .buy-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        #buy-status {
+          font-size: 0.82em;
+          color: #aaa;
+          margin-top: 0.8em;
+          min-height: 1.2em;
+          overflow-wrap: break-word;
         }
         .escrow-note {
           font-size: 0.78em;
           color: #888;
-          margin-top: 0.8em;
+          margin-top: 0.6em;
         }
         .escrow-note a {
           color: #8b00ff;
@@ -146,6 +294,16 @@ class AboutModal extends HTMLElement {
             <p><strong>${appName}</strong> is a drop-in, forkable web3 header designed to give any static website a decentralized foundation. In this <strong>v1.0.0</strong> release the focus is simple: connect your <strong>MetaMask wallet</strong> and connect to <strong>IPFS</strong> via Web3.Storage — two pillars of the open, decentralized web.</p>
             <p>It leverages the <strong>Web3.Storage (W3Up)</strong> service for IPFS data storage and retrieval, and integrates with <strong>MetaMask</strong> for wallet connectivity.</p>
             <p>Decent Head is meant to be forked, cloned, and customized. It is a living submodule — a generic starting point for your organization's decentralized web3 journey. Drop it into any static HTML project and you are ready to go.</p>
+          </div>
+
+          <div class="buy-section">
+            <h3>🎟️ Own a Piece of Web3 History</h3>
+            <p class="supply-counter">10 available now &nbsp;·&nbsp; 100 total &nbsp;·&nbsp; $100 USDC each</p>
+            <button class="buy-btn" id="buy-now-btn">🎟️ Buy Now — $100 USDC</button>
+            <div id="buy-status"></div>
+            <p class="escrow-note">
+              Sold via <a href="https://optimistic.etherscan.io/address/0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e" target="_blank" rel="noopener">DecentEscrow on Optimism</a> — instant, trustless, on-chain.
+            </p>
           </div>
 
           <div class="about-section">
@@ -174,22 +332,12 @@ class AboutModal extends HTMLElement {
             <p>Built with a ton of ❣️💗❣️ and a bare minimum of ingeniuty by</p>
             <p>⚕️ 🦚 ⚸ The Jolly LaMa 📜 & 📜 The RoboSoul 🤖 🦚 ⚕️</p>
           </div>
-
-          <div class="buy-section">
-            <h3>🎟️ Own a Piece of Web3 History</h3>
-            <p class="supply-counter">10 available now &nbsp;·&nbsp; 100 total &nbsp;·&nbsp; $100 USDC each</p>
-            <a class="buy-btn" href="https://thejollylama.github.io/DecentMarket/" target="_blank" rel="noopener">
-              🎟️ Buy Now — $100 USDC
-            </a>
-            <p class="escrow-note">
-              Sold via <a href="https://optimistic.etherscan.io/address/0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e" target="_blank" rel="noopener">DecentEscrow on Optimism</a> — instant, trustless, on-chain.
-            </p>
-          </div>
         </div>
       </div>
     `;
 
     this.shadowRoot.getElementById('close-about').addEventListener('click', () => this.close());
+    this.shadowRoot.getElementById('buy-now-btn').addEventListener('click', () => this._handleBuy());
   }
 }
 

@@ -15,7 +15,7 @@ DecentHead v1.0.0 has **100 genesis DNFTs** minted on Optimism. Ten are now live
 
 | Detail | Value |
 |---|---|
-| **Token ID** | `1` (DecentHead v1.0.0) |
+| **Token ID** | `0` (DecentHead v1.0.0 — first minted) |
 | **DNFT Contract** | [`0xe870f7b1D10C41dbc6b75598a5308B9a2Bb52958`](https://optimistic.etherscan.io/address/0xe870f7b1D10C41dbc6b75598a5308B9a2Bb52958) on Optimism |
 | **Escrow Contract** | [`0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e`](https://optimistic.etherscan.io/address/0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e) on Optimism |
 | **Price** | **$100 USDC** per token |
