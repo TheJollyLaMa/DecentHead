@@ -5,6 +5,35 @@
 [![Version](https://img.shields.io/badge/version-v1.0.0-brightgreen?style=flat-square)](https://github.com/TheJollyLaMa/DecentHead/releases/tag/v1.0.0)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-00e5ff?style=flat-square)](https://thejollylama.github.io/DecentHead/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+[![Early Supporter DNFT](https://img.shields.io/badge/Early%20Access-10%20DNFTs%20%40%20%24100%20USDC-8b00ff?style=flat-square&logo=ethereum)](https://thejollylama.github.io/DecentMarket/)
+
+---
+
+## 🎟️ Become an Early Supporter
+
+DecentHead v1.0.0 has **100 genesis DNFTs** minted on Optimism. Ten are now live in escrow for early supporters — first come, first served.
+
+| Detail | Value |
+|---|---|
+| **Token ID** | `0` (DecentHead v1.0.0 — first minted) |
+| **DNFT Contract** | [`0xe870f7b1D10C41dbc6b75598a5308B9a2Bb52958`](https://optimistic.etherscan.io/address/0xe870f7b1D10C41dbc6b75598a5308B9a2Bb52958) on Optimism |
+| **Escrow Contract** | [`0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e`](https://optimistic.etherscan.io/address/0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e) on Optimism |
+| **Price** | **$100 USDC** per token |
+| **Available** | **10 of 100** listed for sale now |
+| **Standard** | ERC-1155 on Optimism Mainnet |
+
+### What supporters get
+- 🦚 A permanent on-chain receipt of belief in the project at genesis
+- 🔑 Early access to token-gated features, private beta & Discord role
+- 💎 A piece of Web3 history — once the 100 editions are gone, v1.0.0 is gone forever
+
+### How to buy
+1. Visit the **[DecentMarket gallery →](https://thejollylama.github.io/DecentMarket/)**
+2. Connect your MetaMask wallet on **Optimism Mainnet**
+3. Approve $100 USDC and click **Buy** on the DecentHead v1.0.0 listing
+4. The escrow contract instantly transfers 1 DNFT to your wallet — no middleman
+
+> **v2 will have its own minting run.** Once the 100 v1.0.0 editions sell out, they're gone forever.
 
 ---
 
