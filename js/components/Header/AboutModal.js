@@ -1,8 +1,9 @@
 const _aboutBase = new URL('../../../', import.meta.url).href;
 
 // ── DecentEscrow purchase constants ──────────────────────────────────────────
-const ESCROW_ADDRESS   = '0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e';
-const USDC_ADDRESS     = '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85'; // USDC on Optimism
+const ESCROW_ADDRESS    = '0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e';
+const USDC_ADDRESS      = '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85'; // USDC on Optimism
+const ZERO_ADDRESS      = '0x0000000000000000000000000000000000000000';
 const OPTIMISM_CHAIN_ID = 10n; // numeric chainId for Optimism Mainnet
 
 const ESCROW_ABI = [
@@ -195,23 +196,31 @@ class AboutModal extends HTMLElement {
       return;
     }
 
-    // Approve USDC if needed
-    setStatus('⏳ Checking USDC allowance…');
-    const usdc = new ethers.Contract(USDC_ADDRESS, ERC20_ABI, signer);
-    const allowance = await usdc.allowance(buyer, ESCROW_ADDRESS);
+    // Read fresh on-chain price values from the listing
+    const tokenAmount  = listing.priceAmount;          // ERC20 amount (e.g. 1_000_000 for $1 USDC)
+    const priceETH     = listing.priceETH ?? 0n;       // ETH to send with the tx (0 for token-only listings)
+    const paymentToken = listing.priceToken;            // ERC20 contract address for payment
 
-    if (allowance < price) {
-      setStatus('⏳ Approving USDC (confirm in MetaMask)…');
-      btn.textContent = '⏳ Approving…';
-      const approveTx = await usdc.approve(ESCROW_ADDRESS, price);
-      setStatus('⏳ Waiting for approval confirmation…');
-      await approveTx.wait();
+    // Approve ERC20 payment token if needed
+    if (paymentToken && paymentToken !== ZERO_ADDRESS && tokenAmount > 0n) {
+      setStatus('⏳ Checking token allowance…');
+      const token = new ethers.Contract(paymentToken, ERC20_ABI, signer);
+      const allowance = await token.allowance(buyer, ESCROW_ADDRESS);
+
+      if (allowance < tokenAmount) {
+        setStatus('⏳ Approving token spend (confirm in MetaMask)…');
+        btn.textContent = '⏳ Approving…';
+        const approveTx = await token.approve(ESCROW_ADDRESS, tokenAmount);
+        setStatus('⏳ Waiting for approval confirmation…');
+        await approveTx.wait();
+      }
     }
 
-    // Purchase
+    // Purchase — include ETH value if the listing requires it
     setStatus('⏳ Confirm purchase in MetaMask…');
     btn.textContent = '⏳ Purchasing…';
-    const purchaseTx = await escrow.purchaseWithToken(listingId, 1);
+    const txOptions = priceETH > 0n ? { value: priceETH } : {};
+    const purchaseTx = await escrow.purchaseWithToken(listingId, 1, txOptions);
     setStatus('⏳ Waiting for purchase confirmation…');
     await purchaseTx.wait();
 
