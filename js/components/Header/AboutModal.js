@@ -199,16 +199,37 @@ class AboutModal extends HTMLElement {
     // Read fresh on-chain price values from the listing
     const tokenAmount  = listing.priceAmount;          // ERC20 amount (e.g. 1_000_000 for $1 USDC)
     const priceETH     = listing.priceETH ?? 0n;       // ETH to send with the tx (0 for token-only listings)
-    const paymentToken = listing.priceToken;            // ERC20 contract address for payment
+    const rawToken     = listing.priceToken;            // ERC20 address stored in listing (may be address(0))
 
-    // Approve ERC20 payment token if needed
-    if (paymentToken && paymentToken !== ZERO_ADDRESS && tokenAmount > 0n) {
+    // Some escrow deployments store address(0) as priceToken to mean "use the contract's
+    // default payment token (USDC)".  Fall back to USDC_ADDRESS in that case so we always
+    // approve the right token before calling purchaseWithToken.
+    const paymentToken = (rawToken && rawToken !== ZERO_ADDRESS)
+      ? rawToken
+      : USDC_ADDRESS;
+
+    console.log('[DecentHead] listing fields:', {
+      listingId,
+      rawToken,
+      resolvedToken: paymentToken,
+      tokenAmount: tokenAmount.toString(),
+      priceETH: priceETH.toString(),
+    });
+
+    // Approve ERC20 payment token if the listing requires a token payment
+    if (tokenAmount > 0n) {
       setStatus('⏳ Checking token allowance…');
       const token = new ethers.Contract(paymentToken, ERC20_ABI, signer);
       const allowance = await token.allowance(buyer, ESCROW_ADDRESS);
 
+      console.log('[DecentHead] allowance check:', {
+        token: paymentToken,
+        allowance: allowance.toString(),
+        required: tokenAmount.toString(),
+      });
+
       if (allowance < tokenAmount) {
-        setStatus('⏳ Approving token spend (confirm in MetaMask)…');
+        setStatus('⏳ Approving USDC spend (confirm in MetaMask)…');
         btn.textContent = '⏳ Approving…';
         const approveTx = await token.approve(ESCROW_ADDRESS, tokenAmount);
         setStatus('⏳ Waiting for approval confirmation…');
