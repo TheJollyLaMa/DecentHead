@@ -92,6 +92,49 @@ class AboutModal extends HTMLElement {
           font-size: 0.85em;
           color: #aaa;
         }
+        .buy-section {
+          margin: 1.5em 0;
+          text-align: center;
+          border: 1px solid #8b00ff88;
+          border-radius: 12px;
+          padding: 1.2em 1em;
+          background: #1a0033;
+        }
+        .buy-section h3 {
+          color: #cc88ff;
+          margin-top: 0;
+        }
+        .supply-counter {
+          font-size: 0.9em;
+          color: #aaa;
+          margin: 0.4em 0 1em;
+        }
+        .buy-btn {
+          display: inline-block;
+          background: linear-gradient(135deg, #8b00ff, #00e5ff);
+          color: white;
+          font-weight: bold;
+          font-size: 1.1rem;
+          padding: 12px 28px;
+          border-radius: 10px;
+          text-decoration: none;
+          letter-spacing: 0.04em;
+          box-shadow: 0 0 16px #8b00ff88;
+          transition: box-shadow 0.2s, transform 0.1s;
+        }
+        .buy-btn:hover {
+          box-shadow: 0 0 28px #00e5ffaa;
+          transform: translateY(-2px);
+          text-decoration: none;
+        }
+        .escrow-note {
+          font-size: 0.78em;
+          color: #888;
+          margin-top: 0.8em;
+        }
+        .escrow-note a {
+          color: #8b00ff;
+        }
       </style>
       <div class="modal-container">
         <div class="modal-box">
@@ -130,6 +173,17 @@ class AboutModal extends HTMLElement {
           <div class="about-section">
             <p>Built with a ton of ❣️💗❣️ and a bare minimum of ingeniuty by</p>
             <p>⚕️ 🦚 ⚸ The Jolly LaMa 📜 & 📜 The RoboSoul 🤖 🦚 ⚕️</p>
+          </div>
+
+          <div class="buy-section">
+            <h3>🎟️ Own a Piece of Web3 History</h3>
+            <p class="supply-counter">10 available now &nbsp;·&nbsp; 100 total &nbsp;·&nbsp; $100 USDC each</p>
+            <a class="buy-btn" href="https://thejollylama.github.io/DecentMarket/" target="_blank" rel="noopener">
+              🎟️ Buy Now — $100 USDC
+            </a>
+            <p class="escrow-note">
+              Sold via <a href="https://optimistic.etherscan.io/address/0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e" target="_blank" rel="noopener">DecentEscrow on Optimism</a> — instant, trustless, on-chain.
+            </p>
           </div>
         </div>
       </div>
