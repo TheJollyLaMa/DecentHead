@@ -35,6 +35,7 @@ class AboutModal extends HTMLElement {
     console.log('📬 AboutModal.open() triggered');
     this.shadowRoot.querySelector('.modal-container').style.display = 'block';
     this._loadDecentHeadListings();
+    this._resetPayPalSection();
   }
 
   close() {
@@ -293,6 +294,127 @@ class AboutModal extends HTMLElement {
     this._loadDecentHeadListings();
   }
 
+  // ── PayPal purchase flow ──────────────────────────────────────────────────
+
+  /** Dynamically load the PayPal JS SDK (idempotent — skips if already loaded).
+   * Note: SRI cannot be applied to PayPal's SDK URL because it includes dynamic
+   * query parameters (client-id, currency), making the content hash unpredictable.
+   * PayPal's CDN is trusted and served over HTTPS. */
+  _loadPayPalSDK(clientId) {
+    return new Promise((resolve, reject) => {
+      if (window.paypal) { resolve(window.paypal); return; }
+      const script = document.createElement('script');
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&intent=capture`;
+      script.onload  = () => resolve(window.paypal);
+      script.onerror = () => reject(new Error('Failed to load PayPal SDK'));
+      document.head.appendChild(script);
+    });
+  }
+
+  /** Reset the PayPal section back to its initial state (called on each modal open). */
+  _resetPayPalSection() {
+    const walletInput  = this.shadowRoot.getElementById('paypal-wallet-address');
+    const btnContainer = this.shadowRoot.getElementById('paypal-btn-container');
+    const statusEl     = this.shadowRoot.getElementById('paypal-status');
+    if (!walletInput) return;
+    walletInput.value  = '';
+    statusEl.textContent = '';
+    // Rebuild only the inner button — the click listener stays on btnContainer (delegated).
+    btnContainer.innerHTML = `
+      <button class="buy-btn paypal-launch-btn" id="paypal-launch-btn">
+        💳 Buy with PayPal — $100
+      </button>`;
+  }
+
+  /** Called when the user clicks "Buy with PayPal". */
+  async _handlePayPalLaunch() {
+    const walletInput  = this.shadowRoot.getElementById('paypal-wallet-address');
+    const launchBtn    = this.shadowRoot.getElementById('paypal-launch-btn');
+    const btnContainer = this.shadowRoot.getElementById('paypal-btn-container');
+    const statusEl     = this.shadowRoot.getElementById('paypal-status');
+
+    const walletAddress = (walletInput?.value || '').trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      statusEl.textContent = '⚠ Please enter a valid Ethereum wallet address (0x… 40 hex chars).';
+      statusEl.style.color = '#ff8800';
+      walletInput?.focus();
+      return;
+    }
+
+    statusEl.textContent = '⏳ Loading PayPal…';
+    statusEl.style.color = '#aaa';
+    if (launchBtn) launchBtn.disabled = true;
+
+    try {
+      const cfg       = window.DECENT_CONFIG || {};
+      const clientId  = cfg.paypalClientId  || 'test';
+      const adminEmail = cfg.paypalDnftEmail || '';
+
+      const paypal = await this._loadPayPalSDK(clientId);
+
+      btnContainer.innerHTML = '<div id="paypal-sdk-buttons"></div>';
+      const sdkContainer = this.shadowRoot.getElementById('paypal-sdk-buttons');
+      statusEl.textContent = '';
+
+      await paypal.Buttons({
+        style: { layout: 'horizontal', color: 'blue', shape: 'rect', label: 'pay' },
+
+        createOrder(data, actions) {
+          return actions.order.create({
+            purchase_units: [{
+              description: `Supporter DNFT \u2014 Wallet: ${walletAddress}`,
+              custom_id: walletAddress,
+              amount: { currency_code: 'USD', value: '100.00' },
+            }],
+          });
+        },
+
+        onApprove: async (data, actions) => {
+          const details    = await actions.order.capture();
+          const txId       = details.id;
+          const paidAt     = details.update_time || details.create_time || new Date().toISOString();
+          statusEl.innerHTML = `
+            ✅ <strong>Payment confirmed!</strong><br>
+            PayPal Transaction: <code>${txId}</code><br>
+            Wallet: <code>${walletAddress}</code><br>
+            <em>Admin has been notified — your Supporter DNFT will arrive within 24 h.</em>`;
+          statusEl.style.color = '#00e5ff';
+          btnContainer.innerHTML = '';
+
+          if (adminEmail) {
+            const subject = encodeURIComponent('Supporter DNFT Purchase \u2014 PayPal');
+            const body    = encodeURIComponent(
+              `PayPal Transaction ID: ${txId}\n` +
+              `Wallet Address: ${walletAddress}\n` +
+              `Amount: $100 USD\n` +
+              `Timestamp: ${paidAt}`
+            );
+            window.location.href = `mailto:${adminEmail}?subject=${subject}&body=${body}`;
+          }
+        },
+
+        onCancel: () => {
+          statusEl.textContent = 'Payment cancelled. Try again when ready.';
+          statusEl.style.color = '#aaa';
+          this._resetPayPalSection();
+        },
+
+        onError: (err) => {
+          console.error('[DecentHead] PayPal error:', err);
+          statusEl.textContent = '⚠ PayPal encountered an error. Please try again.';
+          statusEl.style.color = '#ff4444';
+          this._resetPayPalSection();
+        },
+      }).render(sdkContainer);
+
+    } catch (err) {
+      console.error('[DecentHead] PayPal init error:', err);
+      statusEl.textContent = '⚠ Could not load PayPal. Check your internet connection.';
+      statusEl.style.color = '#ff4444';
+      this._resetPayPalSection();
+    }
+  }
+
   render() {
     const cfg = window.DECENT_CONFIG || {};
     const appName = cfg.appName || 'Decent Header';
@@ -432,6 +554,86 @@ class AboutModal extends HTMLElement {
         .escrow-note a {
           color: #8b00ff;
         }
+        /* ── Dual buy-option layout ─────────────────────────────────────── */
+        .buy-options {
+          display: flex;
+          gap: 1em;
+          flex-wrap: wrap;
+          justify-content: center;
+          margin-top: 0.6em;
+        }
+        .buy-option-card {
+          flex: 1;
+          min-width: 220px;
+          max-width: 320px;
+          border: 1px solid #8b00ff55;
+          border-radius: 12px;
+          padding: 1em;
+          background: #120028;
+          text-align: center;
+        }
+        .buy-option-card.paypal-option {
+          border-color: #0070ba55;
+          background: #001a2c;
+        }
+        .buy-option-title {
+          font-size: 1em;
+          font-weight: bold;
+          color: #cc88ff;
+          margin-bottom: 0.3em;
+        }
+        .buy-option-card.paypal-option .buy-option-title {
+          color: #5bc6f7;
+        }
+        .buy-option-price {
+          font-size: 0.82em;
+          color: #aaa;
+          margin-bottom: 0.5em;
+        }
+        .buy-option-desc {
+          font-size: 0.8em;
+          color: #888;
+          margin: 0 0 0.8em;
+        }
+        #paypal-wallet-address {
+          width: 100%;
+          box-sizing: border-box;
+          background: #000d1a;
+          border: 1px solid #0070ba;
+          border-radius: 8px;
+          color: #5bc6f7;
+          font-family: 'Courier New', monospace;
+          font-size: 0.82em;
+          padding: 8px 10px;
+          margin-bottom: 0.6em;
+          outline: none;
+        }
+        #paypal-wallet-address::placeholder { color: #3a6080; }
+        #paypal-wallet-address:focus {
+          border-color: #5bc6f7;
+          box-shadow: 0 0 8px #0070ba55;
+        }
+        .paypal-launch-btn {
+          background: linear-gradient(135deg, #0070ba, #003087);
+          box-shadow: 0 0 16px #0070ba55;
+        }
+        .paypal-launch-btn:hover:not(:disabled) {
+          box-shadow: 0 0 28px #5bc6f7aa;
+        }
+        #paypal-status {
+          font-size: 0.82em;
+          color: #aaa;
+          margin-top: 0.8em;
+          min-height: 1.2em;
+          overflow-wrap: break-word;
+          text-align: left;
+          line-height: 1.5;
+        }
+        #paypal-status code {
+          font-size: 0.9em;
+          color: #00e5ff;
+          word-break: break-all;
+        }
       </style>
       <div class="modal-container">
         <div class="modal-box">
@@ -447,11 +649,40 @@ class AboutModal extends HTMLElement {
 
           <div class="buy-section">
             <h3>🎟️ Own a Piece of Web3 History</h3>
-            <div id="buy-cards">⏳ Loading…</div>
-            <div id="buy-status"></div>
-            <p class="escrow-note">
-              Sold via <a href="https://optimistic.etherscan.io/address/0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e" target="_blank" rel="noopener">DecentEscrow on Optimism</a> — instant, trustless, on-chain.
-            </p>
+            <div class="buy-options">
+
+              <!-- ── PayPal option ───────────────────────────────────────── -->
+              <div class="buy-option-card paypal-option">
+                <div class="buy-option-title">💳 Buy with PayPal</div>
+                <div class="buy-option-price">$100 one-time payment</div>
+                <p class="buy-option-desc">Enter your wallet address — admin will transfer your Supporter DNFT after verifying your payment.</p>
+                <input
+                  id="paypal-wallet-address"
+                  type="text"
+                  placeholder="0x… your receiving wallet address"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <div id="paypal-btn-container">
+                  <button class="buy-btn paypal-launch-btn" id="paypal-launch-btn">
+                    💳 Buy with PayPal — $100
+                  </button>
+                </div>
+                <div id="paypal-status"></div>
+              </div>
+
+              <!-- ── Crypto option (unchanged) ───────────────────────────── -->
+              <div class="buy-option-card crypto-option">
+                <div class="buy-option-title">🔗 Buy with Crypto</div>
+                <div class="buy-option-price">USDC on Optimism — instant &amp; trustless</div>
+                <div id="buy-cards">⏳ Loading…</div>
+                <div id="buy-status"></div>
+                <p class="escrow-note">
+                  Sold via <a href="https://optimistic.etherscan.io/address/0x23A457AD3C33d68E4fAd2FCa7c5d9a511E0C350e" target="_blank" rel="noopener">DecentEscrow on Optimism</a> — instant, trustless, on-chain.
+                </p>
+              </div>
+
+            </div>
           </div>
 
           <div class="about-section">
@@ -485,6 +716,11 @@ class AboutModal extends HTMLElement {
     `;
 
     this.shadowRoot.getElementById('close-about').addEventListener('click', () => this.close());
+    // Delegate PayPal button clicks on the container so the listener survives
+    // innerHTML resets in _resetPayPalSection().
+    this.shadowRoot.getElementById('paypal-btn-container').addEventListener('click', (e) => {
+      if (e.target.id === 'paypal-launch-btn') this._handlePayPalLaunch();
+    });
   }
 }
 

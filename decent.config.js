@@ -41,4 +41,19 @@ window.DECENT_CONFIG = {
 
   /** Set to false to hide the "Subscribe" toggle and subscription modal. */
   enableSubscription: true,
+
+  // ── PayPal ─────────────────────────────────────────────────────────────────
+  /**
+   * PayPal JS SDK client-id for Supporter DNFT purchases ($100 one-time).
+   * Use your live client-id for production; use 'test' for sandbox testing.
+   * Get your client-id at https://developer.paypal.com/dashboard/
+   */
+  paypalClientId: 'test',
+
+  /**
+   * Admin email address notified (via mailto: link) after a successful PayPal
+   * Supporter DNFT purchase.  Admin then manually calls safeTransferFrom to
+   * send the DNFT to the buyer's wallet.
+   */
+  paypalDnftEmail: '',
 };
