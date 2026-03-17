@@ -95,15 +95,34 @@ class AboutModal extends HTMLElement {
       );
 
       container.innerHTML = matched.map((l, idx) => {
-        const priceUSD   = (Number(l.priceAmount) / 1e6).toFixed(2);
         const nftInStock = nftBalances[idx] > 0n;
+
+        // Determine the human-readable price label based on payment type
+        let priceLabel;
+        if (l.priceETH > 0n) {
+          priceLabel = `${ethers.formatEther(l.priceETH)} ETH`;
+        } else if (l.priceAmount > 0n) {
+          const isUsdc = !l.priceToken
+            || l.priceToken === ZERO_ADDRESS
+            || l.priceToken.toLowerCase() === USDC_ADDRESS.toLowerCase();
+          if (isUsdc) {
+            priceLabel = `$${(Number(l.priceAmount) / 1e6).toFixed(2)} USDC`;
+          } else {
+            // Other ERC-20 — show raw amount and abbreviated token address; decimals
+            // vary per token so we label this as raw units to avoid misleading display
+            priceLabel = `${l.priceAmount.toString()} raw units (${l.priceToken.slice(0, 8)}…)`;
+          }
+        } else {
+          priceLabel = 'Free';
+        }
+
         return `
           <div class="buy-card">
             <div class="buy-card-label">${l.note}</div>
             <div class="buy-card-supply">${l.available} available</div>
             ${nftInStock
               ? `<button class="buy-btn" data-listing-id="${l.id}" data-price="${l.priceAmount.toString()}">
-                   🎟️ Buy Now — $${priceUSD} USDC
+                   🎟️ Buy Now — ${priceLabel}
                  </button>`
               : `<span role="status" style="color:#ff8800;font-size:0.8em;">${MSG_NFT_NOT_IN_ESCROW}</span>`
             }
@@ -267,7 +286,10 @@ class AboutModal extends HTMLElement {
       });
 
       if (allowance < tokenAmount) {
-        setStatus('⏳ Approving USDC spend (confirm in MetaMask)…');
+        const tokenLabel = paymentToken.toLowerCase() === USDC_ADDRESS.toLowerCase()
+          ? 'USDC'
+          : `token (${paymentToken.slice(0, 8)}…)`;
+        setStatus(`⏳ Approving ${tokenLabel} spend (confirm in MetaMask)…`);
         btn.textContent = '⏳ Approving…';
         const approveTx = await token.approve(ESCROW_ADDRESS, tokenAmount);
         setStatus('⏳ Waiting for approval confirmation…');
@@ -674,7 +696,7 @@ class AboutModal extends HTMLElement {
               <!-- ── Crypto option (unchanged) ───────────────────────────── -->
               <div class="buy-option-card crypto-option">
                 <div class="buy-option-title">🔗 Buy with Crypto</div>
-                <div class="buy-option-price">USDC on Optimism — instant &amp; trustless</div>
+                <div class="buy-option-price">Crypto on Optimism — instant &amp; trustless</div>
                 <div id="buy-cards">⏳ Loading…</div>
                 <div id="buy-status"></div>
                 <p class="escrow-note">
