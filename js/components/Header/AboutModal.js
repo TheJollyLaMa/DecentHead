@@ -12,6 +12,7 @@ const ESCROW_ABI = [
   'function nextListingId() view returns (uint256)',
   'function getListing(uint256 listingId) view returns (tuple(address nftContract, uint256 tokenId, uint256 priceETH, address priceToken, uint256 priceAmount, uint256 available, bool active, string note))',
   'function getNFTBalance(address nftContract, uint256 tokenId) view returns (uint256)',
+  'function purchaseWithETH(uint256 listingId, uint256 amount) payable',
   'function purchaseWithToken(uint256 listingId, uint256 amount)',
 ];
 
@@ -258,29 +259,36 @@ class AboutModal extends HTMLElement {
     const priceETH     = listing.priceETH ?? 0n;       // ETH to send with the tx (0 for token-only listings)
     const rawToken     = listing.priceToken;            // ERC20 address stored in listing (may be address(0))
 
-    // Some escrow deployments store address(0) as priceToken to mean "use the contract's
-    // default payment token (USDC)".  Fall back to USDC_ADDRESS in that case so we always
-    // approve the right token before calling purchaseWithToken.
-    const paymentToken = (rawToken && rawToken !== ZERO_ADDRESS)
-      ? rawToken
-      : USDC_ADDRESS;
-
     console.log('[DecentHead] listing fields:', {
       listingId,
       rawToken,
-      resolvedToken: paymentToken,
       tokenAmount: tokenAmount.toString(),
       priceETH: priceETH.toString(),
     });
 
-    // Approve ERC20 payment token if the listing requires a token payment
-    if (tokenAmount > 0n) {
+    let purchaseTx;
+
+    if (priceETH > 0n) {
+      // ── ETH listing: call purchaseWithETH with exact msg.value ─────────────
+      // The contract requires msg.value == priceETH * amount (1 NFT here).
+      setStatus('⏳ Confirm purchase in MetaMask…');
+      btn.textContent = '⏳ Purchasing…';
+      purchaseTx = await escrow.purchaseWithETH(listingId, 1, { value: priceETH });
+    } else {
+      // ── ERC-20 listing: approve token then call purchaseWithToken ──────────
+      // Some escrow deployments store address(0) as priceToken to mean "use the
+      // contract's default payment token (USDC)". Fall back to USDC_ADDRESS so
+      // we always approve the right token.
+      const paymentToken = (rawToken && rawToken !== ZERO_ADDRESS)
+        ? rawToken
+        : USDC_ADDRESS;
+
       setStatus('⏳ Checking token allowance…');
       const token = new ethers.Contract(paymentToken, ERC20_ABI, signer);
       const allowance = await token.allowance(buyer, ESCROW_ADDRESS);
 
       console.log('[DecentHead] allowance check:', {
-        token: paymentToken,
+        resolvedToken: paymentToken,
         allowance: allowance.toString(),
         required: tokenAmount.toString(),
       });
@@ -295,13 +303,12 @@ class AboutModal extends HTMLElement {
         setStatus('⏳ Waiting for approval confirmation…');
         await approveTx.wait();
       }
+
+      setStatus('⏳ Confirm purchase in MetaMask…');
+      btn.textContent = '⏳ Purchasing…';
+      purchaseTx = await escrow.purchaseWithToken(listingId, 1);
     }
 
-    // Purchase — include ETH value if the listing requires it
-    setStatus('⏳ Confirm purchase in MetaMask…');
-    btn.textContent = '⏳ Purchasing…';
-    const txOptions = priceETH > 0n ? { value: priceETH } : {};
-    const purchaseTx = await escrow.purchaseWithToken(listingId, 1, txOptions);
     setStatus('⏳ Waiting for purchase confirmation…');
     await purchaseTx.wait();
 
