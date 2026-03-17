@@ -6,9 +6,12 @@ const USDC_ADDRESS      = '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85'; // USDC 
 const ZERO_ADDRESS      = '0x0000000000000000000000000000000000000000';
 const OPTIMISM_CHAIN_ID = 10n; // numeric chainId for Optimism Mainnet
 
+const MSG_NFT_NOT_IN_ESCROW = '⚠ NFT stock not yet loaded into escrow — check back soon.';
+
 const ESCROW_ABI = [
   'function nextListingId() view returns (uint256)',
   'function getListing(uint256 listingId) view returns (tuple(address nftContract, uint256 tokenId, uint256 priceETH, address priceToken, uint256 priceAmount, uint256 available, bool active, string note))',
+  'function getNFTBalance(address nftContract, uint256 tokenId) view returns (uint256)',
   'function purchaseWithToken(uint256 listingId, uint256 amount)',
 ];
 
@@ -84,15 +87,25 @@ class AboutModal extends HTMLElement {
         return;
       }
 
-      container.innerHTML = matched.map(l => {
-        const priceUSD = (Number(l.priceAmount) / 1e6).toFixed(2);
+      // Verify actual escrow NFT stock — the listing metadata can be stale if
+      // the NFT was never deposited or was withdrawn after listing.
+      const nftBalances = await Promise.all(
+        matched.map(l => escrow.getNFTBalance(l.nftContract, l.tokenId))
+      );
+
+      container.innerHTML = matched.map((l, idx) => {
+        const priceUSD   = (Number(l.priceAmount) / 1e6).toFixed(2);
+        const nftInStock = nftBalances[idx] > 0n;
         return `
           <div class="buy-card">
             <div class="buy-card-label">${l.note}</div>
             <div class="buy-card-supply">${l.available} available</div>
-            <button class="buy-btn" data-listing-id="${l.id}" data-price="${l.priceAmount.toString()}">
-              🎟️ Buy Now — $${priceUSD} USDC
-            </button>
+            ${nftInStock
+              ? `<button class="buy-btn" data-listing-id="${l.id}" data-price="${l.priceAmount.toString()}">
+                   🎟️ Buy Now — $${priceUSD} USDC
+                 </button>`
+              : `<span role="status" style="color:#ff8800;font-size:0.8em;">${MSG_NFT_NOT_IN_ESCROW}</span>`
+            }
           </div>
         `;
       }).join('');
@@ -170,7 +183,14 @@ class AboutModal extends HTMLElement {
     } catch (err) {
       btn.disabled = false;
       btn.textContent = '🎟️ Buy Now';
-      setStatus(`⚠ ${err.reason || err.message || 'Unknown error'}`, '#ff4444');
+      // Decode known contract errors into user-friendly messages
+      const data = err?.data ?? err?.info?.error?.data ?? '';
+      if (typeof data === 'string' && data.startsWith('0x03dee4c5')) {
+        // ERC1155InsufficientBalance(address sender, uint256 balance, uint256 needed, uint256 tokenId)
+        setStatus('⚠ NFT stock not in escrow — the seller needs to deposit NFTs before purchase.', '#ff8800');
+      } else {
+        setStatus(`⚠ ${err.reason || err.message || 'Unknown error'}`, '#ff4444');
+      }
     }
   }
 
@@ -193,6 +213,23 @@ class AboutModal extends HTMLElement {
       btn.disabled = false;
       btn.textContent = '🎟️ Buy Now';
       setStatus('⚠ Sold out — no tokens remaining.', '#ff8800');
+      return;
+    }
+
+    // Pre-flight: verify the escrow actually holds the NFT.
+    // The listing's `available` field can be stale if NFTs were never
+    // deposited into the escrow or were later withdrawn.
+    setStatus('⏳ Verifying NFT stock…');
+    const nftBalance = await escrow.getNFTBalance(listing.nftContract, listing.tokenId);
+    console.log('[DecentHead] escrow NFT balance:', {
+      nftContract: listing.nftContract,
+      tokenId: listing.tokenId.toString(),
+      balance: nftBalance.toString(),
+    });
+    if (nftBalance < 1n) {
+      btn.disabled = false;
+      btn.textContent = '🎟️ Buy Now';
+      setStatus(`⚠ ${MSG_NFT_NOT_IN_ESCROW}`, '#ff8800');
       return;
     }
 
