@@ -2,7 +2,7 @@ import { IPFS_CAPABILITIES, readIPFSHostStatus, openIPFSHostControls, validateIP
 
 import { ipfs } from '../../ipfs.js';
 import { config } from '../../config.js';
-import { modalStyles, safeURL, escapeHTML } from '../../ui.js';
+import { modalStyles, safeURL, escapeHTML, modalHeading, bindModalClose } from '../../ui.js';
 
 const base = new URL('../../../', import.meta.url).href;
 
@@ -33,15 +33,10 @@ export class IPFSControls extends HTMLElement {
         :host([data-docked]) #open { width: 100%; height: 100%; }
         #open img { width: 60%; height: 60%; object-fit: contain; filter: drop-shadow(0 2px 6px #0009); }
         dialog { box-sizing: border-box; width: min(30rem, calc(100vw - 24px)); max-height: calc(100dvh - 24px);
-          overflow: auto; border: 1px solid var(--dh-accent, #73e8df); border-radius: 12px; padding: 20px;
+          overflow: auto;
           background: var(--dh-bg-1, #101b27); color: var(--dh-text, #edf9ff); overflow-wrap: anywhere; }
         dialog::backdrop { background: #000a; }
-        h2 { margin-top: 0; }
-        section { border-top: 1px solid #536575; padding: 12px 0; }
-        h3 { margin: 0; font-size: 1rem; }
-        p { margin: 8px 0; }
-        section button, #refresh, #close { padding: 8px 12px; background: #20374c;
-          color: inherit; border: 1px solid #8faaba; border-radius: 6px; }
+        section button, #refresh { padding: 8px 12px; }
         #message { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
           overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
         @media (max-width: 600px) { :host(:not([data-docked])) #open { width: 42px; height: 42px; } }
@@ -51,46 +46,53 @@ export class IPFSControls extends HTMLElement {
       </button>
       <p id="message" role="status" aria-live="polite"></p>
       <dialog aria-labelledby="title">
-        <h2 id="title">IPFS data controls</h2>
-        <p id="app"></p>
-        <section><h3>Storage provider</h3>
-          <label>Provider <select id="provider"><option value="pinata">Pinata (default)</option><option value="local">IPFS Desktop / local Kubo</option></select></label>
-          <p>Credentials stay in this tab’s memory, never in config or browser storage. No upload happens on connection.</p>
-          <label>Own Pinata JWT <input id="jwt" type="password" autocomplete="off" /></label>
-          <details><summary>Or use your API key + secret</summary>
+        ${modalHeading('IPFS data controls', 'title', '⬡')}
+        <p>Choose your storage. Back up only what you want to share.</p>
+        <p id="app" class="quiet"></p>
+        <details id="provider-settings"><summary><span aria-hidden="true">⬡</span> <span>Storage provider</span></summary>
+          <label for="provider">Provider</label><select id="provider"><option value="pinata">Pinata (default)</option><option value="local">IPFS Desktop / local Kubo</option></select>
+          <p class="quiet">Credentials stay in this tab. Selecting a provider uploads nothing.</p>
+          <div id="pinata-settings"><label>Own Pinata JWT <input id="jwt" type="password" autocomplete="off" /></label>
+          <details><summary>API key instead</summary>
             <label>API key <input id="key" type="password" autocomplete="off" /></label>
             <label>API secret <input id="secret" type="password" autocomplete="off" /></label>
-          </details>
-          <p>Local Kubo defaults to http://127.0.0.1:5001. Allow only this dapp’s origin in Kubo CORS. UCAN authorization: planned.</p>
+          </details></div>
+          <p id="local-settings" class="quiet" hidden>Use your running IPFS Desktop / Kubo node. Allow this dapp’s origin in its CORS settings. See the setup guide below.</p>
           <button id="save-provider">Use provider</button>
           <p id="provider-message" role="status"></p>
-        </section>
+        </details>
         <section id="data-controls" hidden><h3>Backup / restore</h3>
-          <p>Only host-selected data is exported. IPFS is public and persistent: encrypt sensitive data in your adapter before uploading.</p>
+          <p class="quiet">IPFS is public. Only app-selected data is exported; encrypt private data first.</p>
           <button id="backup">Upload backup</button>
-          <label>Backup CID <input id="restore-cid" /></label><button id="restore">Restore backup</button>
+          <details><summary>Restore a backup</summary><label>Backup CID <input id="restore-cid" /></label><button id="restore">Restore backup</button></details>
           <p id="data-message" role="status"></p>
         </section>
-        <section><h3>Opt-in community pinning</h3>
+        <details id="community-settings"><summary><span aria-hidden="true">◎</span> <span>Community pinning</span></summary>
+          <p class="quiet">Keep a public copy using your provider. Pinning alone does not earn rewards.</p>
           <label>Public content CID <input id="pin-cid" /></label>
           <label><input id="consent" type="checkbox" /> I opt in to publicly pin this content with my provider.</label>
           <button id="pin">Request community pin</button>
-          <p>Pinning does not enroll you in rewards. Open the host’s reward controls below for program terms and eligibility.</p>
           <p id="pin-message" role="status"></p>
-        </section>
-        <p>Backups, public replication and reward participation are separate.
-          Opening these controls does not upload data, pin content or make a payment.</p>
+        </details>
         ${Object.entries(IPFS_CAPABILITIES).map(([key, label]) => `
-          <section><h3>${label}</h3><p id="${key}-status">Not checked.</p>
+          <section data-host-capability="${key}"><h3>${{ backup: '↥', replication: '◎', rewards: '◈' }[key] || '↗'} ${label}</h3><p class="quiet" id="${key}-status">Not checked.</p>
             <button type="button" data-capability="${key}" disabled>Open ${label.toLowerCase()} controls</button>
           </section>`).join('')}
         <p id="status-error" role="alert"></p>
-        <button id="refresh" type="button">Refresh status</button>
-        <button id="close" type="button">Close</button>
+        <div class="modal-footer"><a href="${base}docs/ADOPTING.md#storage-controls" target="_blank" rel="noopener noreferrer">Storage setup guide ↗</a>
+        <button id="refresh" type="button">Refresh status</button></div>
       </dialog>`;
     const root = this.shadowRoot;
     this.dialog = root.querySelector('dialog');
+    bindModalClose(this.dialog);
     root.getElementById('provider').value = ipfs.provider;
+    const showProvider = () => {
+      const local = root.getElementById('provider').value === 'local';
+      root.getElementById('local-settings').hidden = !local;
+      root.getElementById('pinata-settings').hidden = local;
+    };
+    root.getElementById('provider').onchange = showProvider;
+    showProvider();
     root.getElementById('save-provider').onclick = () => {
       try {
         ipfs.configure({ provider: root.getElementById('provider').value, jwt: root.getElementById('jwt').value.trim(),
@@ -129,7 +131,6 @@ export class IPFSControls extends HTMLElement {
       this.dialog.showModal();
       this.refresh();
     });
-    root.getElementById('close').addEventListener('click', () => this.dialog.close());
     this.dialog.addEventListener('close', () => {
       if (this.operation === 'status') {
         this.request++;
@@ -183,6 +184,7 @@ export class IPFSControls extends HTMLElement {
       if (request !== this.request) return;
       this.setBusy(false);
       for (const [key, entry] of Object.entries(status)) {
+        root.querySelector(`[data-host-capability="${key}"]`).hidden = !Object.hasOwn(this.adapter.capabilities, key);
         root.getElementById(`${key}-status`).textContent = `${entry.state}: ${entry.detail}`;
         root.querySelector(`[data-capability="${key}"]`).disabled =
           entry.state === 'unavailable' || entry.state === 'pending';

@@ -3,6 +3,7 @@ import './Header/IPFSStatus.js';
 import './Header/AppTitle.js';
 import './Header/WalletConnect.js';
 import './Header/AboutModal.js';
+import './Header/AnkhMenu.js';
 const css = new URL('../../css/decent-head.css', import.meta.url).href;
 const SVG = 'http://www.w3.org/2000/svg';
 const center = rect => rect && rect.width ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } : null;
@@ -15,7 +16,7 @@ export class DecentHeader extends HTMLElement {
     }
     this.shadowRoot.innerHTML = `<link rel="stylesheet" href="${css}" />
       <header><div class="dh-background" aria-hidden="true"></div><svg class="dh-wires" aria-hidden="true"></svg>
-      <ipfs-status></ipfs-status><app-title></app-title><wallet-connect></wallet-connect></header><about-modal></about-modal>`;
+      <ipfs-status></ipfs-status><div class="dh-title-tools"><ankh-menu side="left"></ankh-menu><app-title></app-title><ankh-menu side="right"></ankh-menu></div><wallet-connect></wallet-connect></header><about-modal></about-modal>`;
     this.shadowRoot.querySelector('app-title').addEventListener('decenthead:about', () => this.shadowRoot.querySelector('about-modal').open());
     this.drawWires = () => cancelAnimationFrame(this.frame) || (this.frame = requestAnimationFrame(() => this.wire()));
     this.observer = new ResizeObserver(this.drawWires);

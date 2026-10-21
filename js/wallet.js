@@ -13,9 +13,11 @@ export function loadEthers() {
 }
 const emit = detail => window.dispatchEvent(new CustomEvent('decenthead:wallet', { detail }));
 export class WalletSession {
-  constructor() {
+  constructor({ lookupName } = {}) {
+    this.lookupName = lookupName || (async address => (await import('./ens.js')).lookupWalletName(address));
+    this.identityRequest = 0;
     this.providers = [];
-    this.state = { connected: false, address: null, chainId: null, provider: null };
+    this.state = { connected: false, address: null, chainId: null, provider: null, ensName: null, ensStatus: 'idle' };
     this.generation = 0;
     this.announce = event => {
       this.providers = discoverProvider(this.providers, event.detail);
@@ -41,12 +43,13 @@ export class WalletSession {
     if (generation !== this.generation) return;
     this.rawProvider = provider;
     this.browserProvider = new ethers.BrowserProvider(provider, 'any');
-    this.state = { connected: true, address: accounts[0], chainId, provider: this.browserProvider };
+    this.state = { connected: true, address: accounts[0], chainId, provider: this.browserProvider, ensName: null, ensStatus: 'idle' };
     this.handlers = {
       accountsChanged: accounts => {
         if (!accounts.length) { this.forget(); return; }
-        this.state = { ...this.state, address: accounts[0] };
+        this.state = { ...this.state, address: accounts[0], ensName: null, ensStatus: 'idle' };
         emit(this.snapshot());
+        void this.resolveIdentity();
       },
       chainChanged: chainId => {
         this.browserProvider = new ethers.BrowserProvider(provider, 'any');
@@ -57,7 +60,24 @@ export class WalletSession {
     };
     for (const [event, handler] of Object.entries(this.handlers)) provider.on?.(event, handler);
     emit(this.snapshot());
+    void this.resolveIdentity();
     return this.snapshot();
+  }
+  async resolveIdentity() {
+    const request = ++this.identityRequest, address = this.state.address;
+    if (!address || !config.ens.enabled) return;
+    this.state = { ...this.state, ensStatus: 'loading' };
+    emit(this.snapshot());
+    try {
+      const ensName = await this.lookupName(address);
+      if (request !== this.identityRequest || address !== this.state.address) return;
+      this.state = { ...this.state, ensName, ensStatus: ensName ? 'resolved' : 'not-found' };
+    } catch (error) {
+      if (request !== this.identityRequest || address !== this.state.address) return;
+      this.state = { ...this.state, ensName: null, ensStatus: 'unavailable' };
+      console.warn('[DecentHead ENS] Name lookup failed:', error.message);
+    }
+    emit(this.snapshot());
   }
   async ensureChain(chain = config.chain) {
     if (!this.rawProvider) throw new Error('Connect a wallet first');
@@ -73,11 +93,12 @@ export class WalletSession {
   }
   forget(notify = true) {
     this.generation++;
+    this.identityRequest++;
     for (const [event, handler] of Object.entries(this.handlers || {})) this.rawProvider?.removeListener?.(event, handler);
     this.handlers = null;
     this.rawProvider = null;
     this.browserProvider = null;
-    this.state = { connected: false, address: null, chainId: null, provider: null };
+    this.state = { connected: false, address: null, chainId: null, provider: null, ensName: null, ensStatus: 'idle' };
     if (notify) emit(this.snapshot());
   }
 }

@@ -3,6 +3,7 @@ window.DECENT_CONFIG = {
   version: '2.0.0',
   appName: 'DecentHead',
   subtitle: 'Your dapp. Your data. Your wallet.',
+  ens: { enabled: true, rpcUrl: 'https://ethereum-rpc.publicnode.com' },
   art: { ipfsIcon: null, titleIcon: null, walletIcon: null, titleEnds: ['::-', '-::'] }, // Optional host image URLs (relative to the page) and title glyphs.
   theme: { 'bg-1': '#0a1220', 'bg-2': '#10202a', 'bg-3': '#12302c', accent: '#7af0c6', 'accent-2': '#8d7cf7' },
   chain: { chainId: 8453, chainName: 'Base', rpcUrls: ['https://mainnet.base.org'],

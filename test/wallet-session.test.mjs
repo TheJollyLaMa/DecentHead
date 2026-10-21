@@ -18,7 +18,7 @@ test('wallet session is click-only, shares BrowserProvider, handles lifecycle an
     removeListener(event, handler) { if (listeners.get(event) === handler) listeners.delete(event); },
   };
   window.ethereum = raw;
-  const session = new WalletSession(), emitted = [];
+  const session = new WalletSession({ lookupName: async () => null }), emitted = [];
   window.addEventListener('decenthead:wallet', event => emitted.push(event.detail));
   assert.deepEqual(methods, []);
   assert.equal(session.available()[0].provider, raw);
@@ -39,4 +39,47 @@ test('wallet session is click-only, shares BrowserProvider, handles lifecycle an
   assert.equal(session.snapshot().address, null);
   assert.equal(listeners.size, 0);
   assert.equal(methods.includes('wallet_requestPermissions'), false);
+});
+
+test('ENS identity updates discard stale results on account changes and disconnect', async () => {
+  const { WalletSession } = await import('../js/wallet.js');
+  const pending = [], handlers = new Map();
+  const session = new WalletSession({ lookupName: address => new Promise(resolve => pending.push({ address, resolve })) });
+  const raw = {
+    request: async ({ method }) => method === 'eth_chainId' ? '0x2105' : ['0x' + '1'.repeat(40)],
+    on: (name, handler) => handlers.set(name, handler),
+    removeListener: name => handlers.delete(name),
+  };
+  await session.connect(raw);
+  assert.equal(session.snapshot().ensStatus, 'loading');
+  handlers.get('accountsChanged')(['0x' + '2'.repeat(40)]);
+  pending[0].resolve('previous.eth');
+  await Promise.resolve();
+  assert.equal(session.snapshot().ensName, null);
+  pending[1].resolve('current.eth');
+  await Promise.resolve();
+  assert.equal(session.snapshot().ensName, 'current.eth');
+  assert.equal(session.snapshot().ensStatus, 'resolved');
+  handlers.get('accountsChanged')(['0x' + '3'.repeat(40)]);
+  assert.equal(session.snapshot().ensName, null);
+  session.forget();
+  pending[2].resolve('disconnected.eth');
+  await Promise.resolve();
+  assert.equal(session.snapshot().ensName, null);
+  assert.equal(session.snapshot().connected, false);
+});
+
+test('ENS outages retain address and emit an explicit unavailable state', async () => {
+  const { WalletSession } = await import('../js/wallet.js');
+  const session = new WalletSession({ lookupName: async () => { throw new Error('Synthetic ENS outage'); } });
+  const original = console.warn, warnings = [];
+  console.warn = (...args) => warnings.push(args.join(' '));
+  try {
+    await session.connect({ request: async ({ method }) => method === 'eth_chainId' ? '0x2105' : ['0x' + '1'.repeat(40)] });
+    await Promise.resolve();
+    assert.equal(session.snapshot().connected, true);
+    assert.equal(session.snapshot().ensStatus, 'unavailable');
+    assert.equal(session.snapshot().ensName, null);
+    assert.equal(warnings.length, 1);
+  } finally { console.warn = original; }
 });

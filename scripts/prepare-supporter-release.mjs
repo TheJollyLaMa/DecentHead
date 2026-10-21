@@ -1,13 +1,20 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { buildSupporterMetadata } from './supporter-metadata.mjs';
-const { TAG: tag, GITHUB_REPOSITORY: repo, PINATA_JWT: jwt, SUPPORTER_IMAGE: image } = process.env;
+import { validateManifest } from './supporter-protocol.mjs';
+const { TAG: tag, GITHUB_REPOSITORY: repo, PINATA_JWT: jwt } = process.env;
 if (!tag || tag.startsWith('-') || !/^[\w./-]+$/.test(tag)) throw new Error('A valid release tag is required');
 const run = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8' }).trim();
+if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '') || !jwt) throw new Error('Repository and PINATA_JWT required; preparation must be fully pinned');
+const existingRelease = JSON.parse(run('gh', ['release', 'view', tag, '--repo', repo, '--json', 'body,assets,isDraft']));
+if (existingRelease.isDraft) throw new Error('Published release required');
+if (existingRelease.assets.some(asset => asset.name === 'supporter-release.json')) throw new Error('Release already frozen; do not replace its preparation. Use a new version.');
 const commit = run('git', ['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]);
+if (run('git', ['rev-parse', 'HEAD']) !== commit) throw new Error('Render and prepare from the exact release tag checkout');
+const artwork = JSON.parse(readFileSync('supporter-artwork.json', 'utf8'));
+if (artwork.version !== tag || artwork.releaseDate !== process.env.RELEASE_DATE) throw new Error('Artwork release identity mismatch');
 run('git', ['archive', '--format=tar.gz', '--output=supporter-source.tar.gz', commit]);
 async function pin(file, name, type) {
-  if (!jwt) return null;
   const body = new FormData();
   body.append('file', new Blob([file], { type }), name);
   const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
@@ -18,23 +25,21 @@ async function pin(file, name, type) {
   if (!/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7]{20,})$/.test(result.IpfsHash || '')) throw new Error('Invalid Pinata CID');
   return result.IpfsHash;
 }
-if (!jwt) console.log('::notice::PINATA_JWT absent: skipping IPFS pins. Steward must pin before minting.');
 const codeArchiveCid = await pin(readFileSync('supporter-source.tar.gz'), 'supporter-source.tar.gz', 'application/gzip');
-// Convention: each release commits its Supporter artwork at img/supporter-dnft.png (see scripts/render-supporter-image.mjs).
-const IMAGE_PATH = 'img/supporter-dnft.png';
-let imageCid = null, imageURI = image;
-if (!imageURI) {
-  let artwork = null;
-  try { artwork = execFileSync('git', ['show', `${commit}:${IMAGE_PATH}`]); } catch { /* no release artwork committed */ }
-  if (artwork) {
-    imageCid = await pin(artwork, `supporter-dnft-${tag}.png`, 'image/png');
-    imageURI = imageCid ? `ipfs://${imageCid}` : `https://raw.githubusercontent.com/${repo}/${commit}/${IMAGE_PATH}`;
-  }
-}
-const metadata = buildSupporterMetadata({ repo, version: tag, commit, codeArchiveCid, image: imageURI });
+const front = `ipfs://${await pin(readFileSync('supporter-front.png'), 'supporter-front.png', 'image/png')}`;
+const back = `ipfs://${await pin(readFileSync('supporter-back.png'), 'supporter-back.png', 'image/png')}`;
+const animation = `ipfs://${await pin(readFileSync('supporter-presentation.html'), 'supporter-presentation.html', 'text/html')}`;
+const summary = String(existingRelease.body || '').replace(/<!--[\s\S]*?-->/g, '').replace(/[#*`>\r\n]+/g, ' ').trim().slice(0, 280);
+const manifest = { schema: 1, repo, version: tag, commit, ...artwork, chainId: 8453, quantity: '1000', codeArchiveCid, front, back, animation, summary };
+const metadata = buildSupporterMetadata({ repo, version: tag, commit, codeArchiveCid, image: front, release: manifest });
 writeFileSync('supporter-metadata.json', JSON.stringify(metadata, null, 2) + '\n');
 const metadataCid = await pin(readFileSync('supporter-metadata.json'), 'supporter-metadata.json', 'application/json');
-const release = JSON.parse(run('gh', ['release', 'view', tag, '--repo', repo, '--json', 'body']));
+manifest.metadataURI = `ipfs://${metadataCid}`;
+validateManifest(manifest);
+writeFileSync('supporter-release.json', JSON.stringify(manifest, null, 2) + '\n');
+// Metadata points to already pinned assets; only this later manifest points to metadata.
+run('gh', ['release', 'upload', tag, 'supporter-source.tar.gz', 'supporter-front.png', 'supporter-back.png', 'supporter-presentation.html', 'supporter-metadata.json', 'supporter-release.json', '--repo', repo]);
+const release = existingRelease;
 const start = '<!-- supporter-dnft:start -->', end = '<!-- supporter-dnft:end -->';
 const section = `${start}\n### Supporter DNFT preparation\n- Code archive CID: ${codeArchiveCid || 'not pinned (PINATA_JWT absent)'}\n- Image: ${metadata.image}\n- Metadata CID: ${metadataCid || 'not pinned (PINATA_JWT absent)'}\n- Source commit: ${commit}\n- Steward wallet signs all minting and escrow transactions.\n${end}`;
 const body = (release.body || '').replace(/<!-- supporter-dnft:start -->[\s\S]*?<!-- supporter-dnft:end -->/g, '').trim();
@@ -43,13 +48,14 @@ run('gh', ['release', 'edit', tag, '--repo', repo, '--notes-file', 'supporter-re
 const title = `Mint Supporter DNFT for ${tag}`;
 const issueBody = `## Steward wallet checklist (no private keys in CI)\n\n` +
   `- Repository: ${repo}\n- Version: ${tag}\n- Commit: ${commit}\n` +
-  `- Code archive CID: ${codeArchiveCid || 'PIN REQUIRED'}\n- Image: ${metadata.image}${imageCid || image ? '' : ' (not pinned)'}\n- Metadata CID: ${metadataCid || 'PIN REQUIRED'}\n` +
+  `- Release date (not minted date): ${manifest.releaseDate}\n- Creator: ${manifest.creator} (${manifest.creatorAddress})\n` +
+  `- Code archive CID: ${codeArchiveCid}\n- Front: ${metadata.image}\n- Back: ${back}\n- 3D HTML: ${animation}\n- Metadata CID: ${metadataCid}\n` +
   `- License: Apache-2.0 + NOTICE\n- Chain: Base (8453)\n- Supply: 1000\n- Price: 10 USDC\n- Royalty: 1000 bps (10%)\n\n` +
-  `1. Verify both pins, archive contents, image, and metadata before signing. If pins were skipped, pin and update this issue.\n` +
-  `2. DecentNFT.registerToken: metadata URI = ${metadataCid ? `ipfs://${metadataCid}` : 'REQUIRED'}, maxSupply = 1000, royaltyBps = 1000; set your royalty recipient and record the returned tokenId. Confirm the deployed ABI.\n` +
+  `1. Verify all pins, archive contents, front/back, frozen manifest and metadata before signing. HTML animation support depends on the viewer (not guaranteed in MetaMask).\n` +
+  `2. DecentNFT_v0.2.registerToken(1000, "${manifest.metadataURI}", 0 /* Product */, royaltyReceiver, 1000); set your royalty recipient and record the returned tokenId. Confirm the deployed ABI.\n` +
   `3. mintProduct: use that tokenId, quantity 1000, steward treasury recipient; confirm actual ABI and mint authority.\n` +
   `4. DecentEscrow: approve/deposit the supporter tokens, create an active token listing for the registered contract/tokenId, quantity 1000, Base USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, priceAmount 10000000 (6 decimals), priceETH 0.\n` +
-  `5. Record NFT/escrow addresses, tokenId, listingId, royalty recipient, and transaction hashes. Configure supporterDnft and verify one purchase.\n\n` +
+  `5. Record NFT/escrow addresses, tokenId, listingId, royalty recipient, and transaction hashes. Configure supporterDnft and verify the purchase route. Then run supporter-announce.yml with public evidence per docs/SUPPORTER-RELEASES.md; it independently verifies chain state before Discord.\n\n` +
   `No transactions have been submitted by this workflow. Steward verifies addresses/ABIs and signs in their wallet.\n`;
 writeFileSync('supporter-mint-issue.md', issueBody);
 const issues = JSON.parse(run('gh', ['issue', 'list', '--repo', repo, '--state', 'all', '--search', `${title} in:title`, '--limit', '100', '--json', 'number,title']));

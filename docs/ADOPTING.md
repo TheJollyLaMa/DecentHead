@@ -5,12 +5,13 @@
 Copy these files, preserving their relative paths, into
 `vendor/decent-head/2.0.0/` in the host dapp:
 
-- `js/main.js`, `js/config.js`, `js/ui.js`, `js/wallet.js`, `js/wallet-logic.js`,
+- `js/main.js`, `js/config.js`, `js/ui.js`, `js/wallet.js`, `js/wallet-logic.js`, `js/ens.js`, `js/chains.js`,
   `js/ipfs.js`, `js/ipfs-host.js`
 - `js/components/Header.js`
-- `js/components/Header/{AppTitle,WalletConnect,AboutModal,IPFSStatus,IPFSControls}.js`
+- `js/components/Header/{AppTitle,WalletConnect,AboutModal,IPFSStatus,IPFSControls,AnkhMenu,orbit}.js`
 - `js/vendor/ethers.umd.min.js`, `js/vendor/ethers.LICENSE.md`
-- `css/decent-head.css`, `img/IPFS_Logo.png`
+- `css/decent-head.css`, `img/IPFS_Logo.png`, `img/MetaMaskFox.png`,
+  `img/Ens_Eth_Breathe.png`, `img/Ens_Eth_Breathe-still.png`, `img/chains/*.svg`
 - `LICENSE`, `NOTICE`, `LICENSES/CC-BY-4.0.txt`
 
 Copy `decent-head.config.js` to your app, edit it, and load it **before** the
@@ -28,6 +29,17 @@ The exported `DecentHead` in `js/main.js` is also installed at
 before importing (use a module config followed by `await import(...)` if your
 adapter itself imports modules). No CSS, fonts, wallet scripts, or assets are
 fetched from a CDN. ethers 6.16.0 is loaded locally only when needed.
+The optional purchase route additionally needs `supporter/buy.html`,
+`supporter/buy.js`, and `js/supporter-purchase.js` at the same relative paths.
+
+## Ankh menu skeletons
+
+Two themed ankh buttons flank the title (below it on mobile). The left opens
+**Admin** and the right opens **My Profile**. These are intentionally inert
+placeholder buttons: clicking an item does not navigate, open another view,
+request a wallet, or grant privileges. The menus close on outside click or
+Escape; Escape returns focus to their trigger. These are not an authorization
+system or a profile implementation. Host-specific behavior is future work.
 
 ## Branding and chain
 
@@ -48,6 +60,28 @@ chainId). Base is the boilerplate default, not a requirement. Connection
 requests accounts only on an explicit click, then switches/adds the configured
 chain. Later manual network changes emit events, not unsolicited switch prompts.
 Wallet announcements are untrusted display data; no provider icons are loaded.
+
+### Wallet identity and disconnect
+
+The fox button toggles this dapp's session: click to connect, click again to
+disconnect. Disconnect clears the shared session and listeners; it does **not**
+revoke the wallet extension's permission for this site. Revoke that in the
+wallet's connected-sites settings if desired.
+
+With `ens.enabled: true` (default), a connected address is reverse-resolved on
+Ethereum mainnet and forward-checked before its ENS name is displayed. This
+works while the wallet is on Base or another chain without switching it.
+The mainnet endpoint is `ens.rpcUrl`; use your own endpoint or set
+`ens.enabled: false` if you do not want to disclose public addresses to that RPC.
+Lookup failures show "ENS unavailable" and retain the address. Account changes
+and disconnect discard outstanding name lookups. ENS names are mutable display
+identities, never payment destinations or authorization proofs.
+
+The ring shows the verified name (or address prefix), four ENS/ETH Breathe
+icons, and the address suffix. Base, Ethereum, and Optimism have bundled chain
+glyphs replacing four blinking sparks. Unknown chains keep neutral sparks,
+never a guessed chain logo. Full addresses remain available in wallet state
+and the button tooltip.
 Forget removes this head’s session/listeners, not the wallet’s site permissions.
 No-wallet visitors get a MetaMask dapp link, also useful on mobile. Short
 addresses avoid unnecessary ENS/RPC traffic.
@@ -109,7 +143,17 @@ await validateAndRestore(backup);
 These methods do not show consent prompts themselves: a calling host/widget
 must provide its own explicit consent/validation UI.
 
-## Providers and community pinning
+## Storage controls
+
+The IPFS dialog initially shows compact storage/community choices and supported
+host actions. Expand **Storage provider** to enter credentials; local-node
+selection hides irrelevant Pinata fields. **Community pinning** and **Restore a
+backup** reveal their inputs only when requested. About sections are likewise
+collapsed. Both dialogs close using the sticky top-right cross, Escape, or a
+click outside the dialog; closing does not cancel an already-submitted upload
+or blockchain transaction.
+
+### Providers and community pinning
 
 `providers.default` is `pinata` or `local`. Pinata’s public API needs the user’s
 JWT, or API key + secret, entered into the provider dialog. Credentials are
@@ -155,12 +199,23 @@ off();
 `getIpfs()` and `getWallet()` return shared session objects, not new connections.
 `on` returns an unsubscribe callback and accepts `wallet`, `ipfs`, `providers`,
 `ready` or full `decenthead:*` DOM event names. Wallet events contain
-`{connected,address,chainId,provider}`. IPFS events contain provider selection
+`{connected,address,chainId,provider,ensName,ensStatus}`. `ensStatus` is `idle`,
+`loading`, `resolved`, `not-found`, or `unavailable`. IPFS events contain provider selection
 state and, on backup completion, action/CID; never credentials or backup data.
 Listen on `window` for `decenthead:ready` if the widget loads before the head.
 Do not request accounts at widget mount.
 
 ## Supporter listing and payments
+
+`supporter/buy.html?chainId=8453&escrow=0x31b07b83e99A9bdF379bf40225b8A80d3804C89d&listingId=ID`
+is a purchase landing route for the approved Base Supporter deployment. It reads
+the listing, requires an active stocked $10 USDC token from the approved NFT
+contract, and enables **Review purchase** only after verification. Buying still
+requires an explicit wallet action, chain confirmation and exact approval.
+The price is rechecked before purchase; a changed price is rejected.
+This route does not mint or prove that a particular version is registered:
+the [release protocol](SUPPORTER-RELEASES.md) binds that separately to metadata
+and mint evidence before announcing its purchase link.
 
 No contract/listing is bundled as a live sales default. Set `supporterDnft`:
 
