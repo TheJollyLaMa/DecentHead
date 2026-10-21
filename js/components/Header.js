@@ -1,46 +1,19 @@
-const _headerBase = new URL('../../', import.meta.url).href;
-
+import { config } from '../config.js';
 import './Header/IPFSStatus.js';
 import './Header/AppTitle.js';
 import './Header/WalletConnect.js';
-import './Header/RightAnkhDropdown.js';
 import './Header/AboutModal.js';
-import './Header/SubscriptionModal.js';
-import './Header/IPFSWaitingModal.js';
-
-class DecentHeader extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
+const css = new URL('../../css/decent-head.css', import.meta.url).href;
+export class DecentHeader extends HTMLElement {
+  constructor() { super(); this.attachShadow({ mode: 'open' }); }
   connectedCallback() {
-    this.render();
-    this.setupHeaderEvents();
-  }
-
-  setupHeaderEvents() {
-    const peacock = this.shadowRoot.querySelector('.peacock-emoji');
-    const aboutModal = document.querySelector('about-modal');
-    if (peacock && aboutModal) {
-      peacock.addEventListener('click', () => {
-        console.log('Peacock icon clicked');
-        aboutModal.open();
-      });
+    for (const [key, value] of Object.entries(config.theme)) {
+      const property = key.startsWith('--dh-') ? key : `--dh-${key}`;
+      if (/^--dh-[a-z0-9-]+$/.test(property)) this.style.setProperty(property, value);
     }
-  }
-
-  render() {
-    this.shadowRoot.innerHTML = `
-        <link rel="stylesheet" href="${_headerBase}css/styles.css" />
-        <link rel="stylesheet" href="${_headerBase}css/header.css" />
-        <header>
-            <ipfs-status></ipfs-status>
-            <app-title></app-title>
-            <wallet-connect></wallet-connect>
-        </header>
-    `;
+    this.shadowRoot.innerHTML = `<link rel="stylesheet" href="${css}" />
+      <header><div class="dh-background" aria-hidden="true"></div><ipfs-status></ipfs-status><app-title></app-title><wallet-connect></wallet-connect></header><about-modal></about-modal>`;
+    this.shadowRoot.querySelector('app-title').addEventListener('decenthead:about', () => this.shadowRoot.querySelector('about-modal').open());
   }
 }
-
-customElements.define('decent-header', DecentHeader);
+if (!customElements.get('decent-header')) customElements.define('decent-header', DecentHeader);

@@ -1,48 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-    <title>☥ Decent 🐮 Header ☥</title>
-    <link rel="icon" type="image/png" href="./img/IPFS_Logo.png" />
-    <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/header.css" />
-
-    <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>  
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
-    <!-- OPTIONAL CONFIGURATION — edit decent.config.js to customise the app -->
-    <script src="decent.config.js"></script>
-
-</head>
-
-<body>
-
-  <!-- @web3-storage browser.min.js hosted in JollySimSiddhi space on web3.Storage -->
-  <script src="https://bafybeicqxq54ncvkxvwdbov6ljgtyyrcpmek3ic2fxrwwsigmh4ud4s2mu.ipfs.w3s.link/browser.min.js"></script>
-  
-
-  <!-- HEADER -->
-  <decent-header> </decent-header>
-
-  <!-- MAIN CONTENT AREA -->
-  <!-- <decent-canvas></decent-canvas> -->
-  
-  <!-- Left and Right Toolbars-->
-  <!-- <decent-left-toolbar></decent-left-toolbar>
-  <decent-right-toolbar></decent-right-toolbar> -->
-
-  <!-- FOOTER -->
-  <!-- <decent-foot> </decent-foot> -->
-
-
-  <!-- MAIN SCRIPT LOADER -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DecentHead v2 — Decent dapp boilerplate</title>
+  <link rel="icon" href="img/IPFS_Logo.png" />
+  <style>body { margin:0; background:#080e18; color:#edf8ff; font:16px/1.6 system-ui; } main { max-width:760px; margin:60px auto; padding:24px; } a { color:#80edd2; }</style>
+  <script src="decent.config.js"></script>
   <script type="module" src="js/main.js"></script>
-
+</head>
+<body>
+  <decent-header></decent-header>
+  <main><h1>Your next Decent dapp starts here.</h1><p>IPFS on the left. Your story in the center. Your wallet on the right.</p><p>No account request, upload, or payment happens until you choose it.</p><a href="docs/ADOPTING.md">Adoption guide</a></main>
 </body>
-
 </html>

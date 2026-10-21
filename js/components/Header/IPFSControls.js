@@ -1,0 +1,219 @@
+import { IPFS_CAPABILITIES, readIPFSHostStatus, openIPFSHostControls, validateIPFSHost } from '../../ipfs-host.js';
+
+import { ipfs } from '../../ipfs.js';
+import { config } from '../../config.js';
+import { modalStyles, safeURL, escapeHTML } from '../../ui.js';
+
+const base = new URL('../../../', import.meta.url).href;
+
+export class IPFSControls extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this.busy = false;
+    this.operation = null;
+    this.request = 0;
+  }
+
+  connectedCallback() {
+    this.shadowRoot.innerHTML = `
+      <style>
+        ${modalStyles}
+        :host { display: block; font: 14px/1.5 system-ui, sans-serif; color: var(--dh-text, #edf9ff); }
+        button { font: inherit; cursor: pointer; }
+        button:focus-visible { outline: 3px solid var(--dh-accent, #73e8df); outline-offset: 3px; }
+        button:disabled { cursor: not-allowed; opacity: .55; }
+        #open { display: grid; place-items: center; width: 64px; height: 64px;
+          border-radius: 50%; border: 1px solid var(--dh-accent, #73e8df); background: var(--dh-bg-1, #101b27); }
+        #open img { width: 38px; height: 38px; }
+        dialog { box-sizing: border-box; width: min(30rem, calc(100vw - 24px)); max-height: calc(100dvh - 24px);
+          overflow: auto; border: 1px solid var(--dh-accent, #73e8df); border-radius: 12px; padding: 20px;
+          background: var(--dh-bg-1, #101b27); color: var(--dh-text, #edf9ff); overflow-wrap: anywhere; }
+        dialog::backdrop { background: #000a; }
+        h2 { margin-top: 0; }
+        section { border-top: 1px solid #536575; padding: 12px 0; }
+        h3 { margin: 0; font-size: 1rem; }
+        p { margin: 8px 0; }
+        section button, #refresh, #close { padding: 8px 12px; background: #20374c;
+          color: inherit; border: 1px solid #8faaba; border-radius: 6px; }
+        #message { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+          overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+        @media (max-width: 600px) { #open { width: 42px; height: 42px; } #open img { width: 28px; height: 28px; } }
+      </style>
+      <button id="open" type="button" aria-label="Open IPFS controls" aria-haspopup="dialog">
+        <img src="${escapeHTML(safeURL(config.art.ipfsIcon) || `${base}img/IPFS_Logo.png`)}" alt="" />
+      </button>
+      <p id="message" role="status" aria-live="polite"></p>
+      <dialog aria-labelledby="title">
+        <h2 id="title">IPFS data controls</h2>
+        <p id="app"></p>
+        <section><h3>Storage provider</h3>
+          <label>Provider <select id="provider"><option value="pinata">Pinata (default)</option><option value="local">IPFS Desktop / local Kubo</option></select></label>
+          <p>Credentials stay in this tab’s memory, never in config or browser storage. No upload happens on connection.</p>
+          <label>Own Pinata JWT <input id="jwt" type="password" autocomplete="off" /></label>
+          <details><summary>Or use your API key + secret</summary>
+            <label>API key <input id="key" type="password" autocomplete="off" /></label>
+            <label>API secret <input id="secret" type="password" autocomplete="off" /></label>
+          </details>
+          <p>Local Kubo defaults to http://127.0.0.1:5001. Allow only this dapp’s origin in Kubo CORS. UCAN authorization: planned.</p>
+          <button id="save-provider">Use provider</button>
+          <p id="provider-message" role="status"></p>
+        </section>
+        <section id="data-controls" hidden><h3>Backup / restore</h3>
+          <p>Only host-selected data is exported. IPFS is public and persistent: encrypt sensitive data in your adapter before uploading.</p>
+          <button id="backup">Upload backup</button>
+          <label>Backup CID <input id="restore-cid" /></label><button id="restore">Restore backup</button>
+          <p id="data-message" role="status"></p>
+        </section>
+        <section><h3>Opt-in community pinning</h3>
+          <label>Public content CID <input id="pin-cid" /></label>
+          <label><input id="consent" type="checkbox" /> I opt in to publicly pin this content with my provider.</label>
+          <button id="pin">Request community pin</button>
+          <p>Pinning does not enroll you in rewards. Open the host’s reward controls below for program terms and eligibility.</p>
+          <p id="pin-message" role="status"></p>
+        </section>
+        <p>Backups, public replication and reward participation are separate.
+          Opening these controls does not upload data, pin content or make a payment.</p>
+        ${Object.entries(IPFS_CAPABILITIES).map(([key, label]) => `
+          <section><h3>${label}</h3><p id="${key}-status">Not checked.</p>
+            <button type="button" data-capability="${key}" disabled>Open ${label.toLowerCase()} controls</button>
+          </section>`).join('')}
+        <p id="status-error" role="alert"></p>
+        <button id="refresh" type="button">Refresh status</button>
+        <button id="close" type="button">Close</button>
+      </dialog>`;
+    const root = this.shadowRoot;
+    this.dialog = root.querySelector('dialog');
+    root.getElementById('provider').value = ipfs.provider;
+    root.getElementById('save-provider').onclick = () => {
+      try {
+        ipfs.configure({ provider: root.getElementById('provider').value, jwt: root.getElementById('jwt').value.trim(),
+          apiKey: root.getElementById('key').value.trim(), apiSecret: root.getElementById('secret').value.trim() });
+        for (const id of ['jwt', 'key', 'secret']) root.getElementById(id).value = '';
+        root.getElementById('provider-message').textContent = `${ipfs.provider} selected; not yet verified. No data uploaded.`;
+      } catch (error) { root.getElementById('provider-message').textContent = error.message; }
+    };
+    this.action = async (id, run) => {
+      const button = root.getElementById(id), message = root.getElementById(id === 'pin' ? 'pin-message' : 'data-message');
+      if (this.dataBusy) return;
+      this.dataBusy = true;
+      button.disabled = true;
+      message.textContent = 'Working…';
+      try { message.textContent = await run(); } catch (error) { message.textContent = error.message; }
+      finally { this.dataBusy = false; button.disabled = false; }
+    };
+    root.getElementById('backup').onclick = () => this.action('backup', async () => {
+      if (!config.data?.export) throw new Error('Host export is not configured');
+      if (!confirm('Upload the host-selected data to public IPFS? Encrypt private data first.')) return 'Cancelled.';
+      return `Backup CID: ${await ipfs.upload(await config.data.export())}`;
+    });
+    root.getElementById('restore').onclick = () => this.action('restore', async () => {
+      if (!config.data?.import) throw new Error('Host import is not configured');
+      const data = await ipfs.restore(root.getElementById('restore-cid').value.trim());
+      if (!confirm('Restore this backup? The host will validate and apply it; existing data may change.')) return 'Cancelled.';
+      await config.data.import(data);
+      return 'Host restore completed.';
+    });
+    root.getElementById('pin').onclick = () => this.action('pin', async () => {
+      const result = await ipfs.pin(root.getElementById('pin-cid').value.trim(), { consent: root.getElementById('consent').checked });
+      root.getElementById('consent').checked = false;
+      return result.detail;
+    });
+    root.getElementById('open').addEventListener('click', () => {
+      this.dialog.showModal();
+      this.refresh();
+    });
+    root.getElementById('close').addEventListener('click', () => this.dialog.close());
+    this.dialog.addEventListener('close', () => {
+      if (this.operation === 'status') {
+        this.request++;
+        this.setBusy(false);
+        root.getElementById('message').textContent = 'Status check dismissed. Open the controls to retry.';
+      }
+    });
+    root.getElementById('refresh').addEventListener('click', () => this.refresh());
+    root.querySelectorAll('[data-capability]').forEach(button => {
+      button.addEventListener('click', () => this.openControls(button.dataset.capability));
+    });
+  }
+
+  openBackup() {
+    this.shadowRoot.getElementById('data-controls').hidden = false;
+    this.shadowRoot.getElementById('backup').disabled = !config.data?.export;
+    this.shadowRoot.getElementById('restore').disabled = !config.data?.import;
+    if (!this.dialog.open) this.dialog.showModal();
+    this.shadowRoot.getElementById('data-controls').scrollIntoView({ block: 'nearest' });
+  }
+
+  disconnectedCallback() {
+    this.request++;
+    this.dialog?.close();
+    this.busy = false;
+    this.operation = null;
+  }
+
+  setBusy(busy) {
+    this.busy = busy;
+    if (!busy) this.operation = null;
+    this.shadowRoot.getElementById('open').disabled = busy;
+    this.shadowRoot.getElementById('refresh').disabled = busy;
+    this.shadowRoot.querySelectorAll('[data-capability]').forEach(button => { button.disabled = true; });
+  }
+
+  async refresh() {
+    if (this.busy) return;
+    const request = ++this.request;
+    this.operation = 'status';
+    this.setBusy(true);
+    const root = this.shadowRoot;
+    root.getElementById('status-error').textContent = '';
+    root.getElementById('app').textContent = '';
+    root.getElementById('message').textContent = 'Checking app-reported IPFS status...';
+    root.querySelectorAll('[id$="-status"]').forEach(el => { el.textContent = 'Checking...'; });
+    try {
+      validateIPFSHost(this.adapter);
+      root.getElementById('app').textContent = this.adapter.label;
+      const status = await readIPFSHostStatus(this.adapter);
+      if (request !== this.request) return;
+      this.setBusy(false);
+      for (const [key, entry] of Object.entries(status)) {
+        root.getElementById(`${key}-status`).textContent = `${entry.state}: ${entry.detail}`;
+        root.querySelector(`[data-capability="${key}"]`).disabled =
+          entry.state === 'unavailable' || entry.state === 'pending';
+      }
+      root.getElementById('message').textContent = 'Status supplied by this app; not independent storage or reward verification.';
+    } catch (error) {
+      if (request !== this.request) return;
+      this.setBusy(false);
+      root.getElementById('status-error').textContent = `IPFS status unavailable: ${error.message}`;
+      root.getElementById('message').textContent = 'IPFS configuration or status failed. No storage action was performed.';
+      root.querySelectorAll('[id$="-status"]').forEach(el => { el.textContent = 'Status unavailable; see error below.'; });
+      console.warn('[DecentHead IPFS]', error);
+    }
+  }
+
+  async openControls(capability) {
+    if (this.busy) return;
+    const request = ++this.request;
+    this.operation = 'controls';
+    this.setBusy(true);
+    this.dialog.close();
+    const message = this.shadowRoot.getElementById('message');
+    message.textContent = 'Opening app controls...';
+    try {
+      await openIPFSHostControls(this.adapter, capability);
+      if (request !== this.request) return;
+      message.textContent = 'App controls opened. This is not confirmation of a backup, pin or reward.';
+    } catch (error) {
+      if (request !== this.request) return;
+      this.dialog.showModal();
+      this.shadowRoot.getElementById('status-error').textContent = `Could not open controls: ${error.message}`;
+      message.textContent = 'App controls failed to open.';
+      console.warn('[DecentHead IPFS]', error);
+    } finally {
+      if (request === this.request) this.setBusy(false);
+    }
+  }
+}
+
+if (!customElements.get('ipfs-controls')) customElements.define('ipfs-controls', IPFSControls);

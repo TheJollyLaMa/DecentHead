@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Synthetic IPFS host controls</title>
+  <style>
+    body { margin: 16px; font: 16px/1.5 system-ui, sans-serif; color: #edf9ff; background: #101b27; }
+    main { max-width: 52rem; margin: auto; overflow-wrap: anywhere; }
+    article { padding: 16px; margin: 16px 0; border: 1px solid #8faaba; border-radius: 8px; }
+    button { padding: 8px; font: inherit; }
+    dialog { max-width: min(28rem, calc(100vw - 60px)); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Synthetic IPFS host controls</h1>
+    <p>Local fixture only. No real provider, wallet, data upload, community pin or payment.
+      These visitors test two different host capability sets, not working storage services.</p>
+    <article>
+      <h2>Visitor A: local app backups</h2>
+      <ipfs-status id="backup-host"></ipfs-status>
+    </article>
+    <article>
+      <h2>Visitor B: public community pins</h2>
+      <ipfs-controls id="public-host"></ipfs-controls>
+    </article>
+    <button id="fail-status" type="button">Toggle synthetic status failure</button>
+    <button id="fail-open" type="button">Toggle synthetic open failure</button>
+    <p id="fixture-state" role="status">No synthetic failures enabled.</p>
+    <dialog id="app-panel" aria-labelledby="app-panel-title">
+      <h2 id="app-panel-title">Synthetic host panel</h2>
+      <p id="app-panel-detail"></p>
+      <form method="dialog"><button>Close host panel</button></form>
+    </dialog>
+  </main>
+  <script type="module">
+    const fixture = window.ipfsFixture = { reads: 0, opens: [], failStatus: false, failOpen: false };
+    const open = capability => {
+      if (fixture.failOpen) throw new Error('Synthetic host panel unavailable.');
+      fixture.opens.push(capability);
+      document.getElementById('app-panel-detail').textContent =
+        `${capability} controls opened. No data action or payment occurred.`;
+      document.getElementById('app-panel').showModal();
+    };
+    const status = value => async () => {
+      fixture.reads++;
+      if (fixture.failStatus) throw new Error('Synthetic status offline <not markup>.');
+      return value;
+    };
+    window.DECENT_CONFIG = {
+      ipfsAdapter: {
+        version: 1, label: 'Synthetic backup host',
+        capabilities: { backup: { open: () => open('backup') } },
+        getStatus: status({ backup: { state: 'idle', detail: 'Synthetic local data only; choose a provider in the host panel.' } }),
+      },
+    };
+    const publicControls = document.getElementById('public-host');
+    publicControls.adapter = {
+      version: 1, label: 'Synthetic public host',
+      capabilities: { replication: { open: () => open('replication') }, rewards: { open: () => open('rewards') } },
+      getStatus: status({
+        replication: { state: 'ready', detail: 'Synthetic public manifest available; no content pinned.' },
+        rewards: { state: 'unavailable', detail: 'Reward program inactive; no funds or payment.' },
+      }),
+    };
+    const update = () => {
+      document.getElementById('fixture-state').textContent =
+        `Synthetic status failure: ${fixture.failStatus}. Synthetic open failure: ${fixture.failOpen}.`;
+    };
+    document.getElementById('fail-status').onclick = () => { fixture.failStatus = !fixture.failStatus; update(); };
+    document.getElementById('fail-open').onclick = () => { fixture.failOpen = !fixture.failOpen; update(); };
+    await import('../js/components/Header/IPFSStatus.js');
+  </script>
+</body>
+</html>

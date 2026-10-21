@@ -1,59 +1,28 @@
-/**
- * decent.config.js — Decent Head Configuration
- *
- * Copy and customise this file when white-labelling or forking Decent Head.
- * All values set here are available to every component via `window.DECENT_CONFIG`.
- *
- * Every key is optional — components fall back to their built-in defaults when
- * a key is missing or when this file is not loaded at all.
- */
-
+// Load before js/main.js. Every setting is optional; never put secrets here.
 window.DECENT_CONFIG = {
-  // ── App identity ──────────────────────────────────────────────────────────
-  /** Main title text displayed in the header (without decorative symbols). */
-  appName: 'Decent Header',
-
-  /** Short tagline rendered below the main title. */
-  subtitle: '(Another Decent Frankenstein)',
-
-  // ── Token / DeFi ─────────────────────────────────────────────────────────
-  /**
-   * ERC-20 token contract address used for balance display in the right-ankh
-   * dropdown.  Must be a checksummed Ethereum/Polygon address.
-   */
-  tokenAddress: '0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433',
-
-  /** Human-readable symbol for the token (shown next to the balance). */
-  tokenSymbol: 'Ommm',
-
-  /**
-   * Full URL of the Uniswap (or other DEX) page for the token.
-   * Used in the right-ankh dropdown and the About modal.
-   */
-  uniswapUrl: 'https://app.uniswap.org/explore/tokens/polygon/0x1a74f818F1b42dBFcE449c7Fa93B107C6e4A2433',
-
-  // ── Feature flags ─────────────────────────────────────────────────────────
-  /** Set to false to hide the IPFS / W3Up status bar entirely. */
-  enableIPFS: true,
-
-  /** Set to false to hide the "Share Data" toggle in the right-ankh menu. */
-  enableShareData: true,
-
-  /** Set to false to hide the "Subscribe" toggle and subscription modal. */
-  enableSubscription: true,
-
-  // ── PayPal ─────────────────────────────────────────────────────────────────
-  /**
-   * PayPal JS SDK client-id for Supporter DNFT purchases ($100 one-time).
-   * Use your live client-id for production; use 'test' for sandbox testing.
-   * Get your client-id at https://developer.paypal.com/dashboard/
-   */
-  paypalClientId: 'test',
-
-  /**
-   * Admin email address notified (via mailto: link) after a successful PayPal
-   * Supporter DNFT purchase.  Admin then manually calls safeTransferFrom to
-   * send the DNFT to the buyer's wallet.
-   */
-  paypalDnftEmail: '',
+  version: '2.0.0',
+  appName: 'DecentHead',
+  subtitle: 'Your dapp. Your data. Your wallet.',
+  art: { ipfsIcon: null, titleIcon: null }, // Optional host image URLs; relative to the page.
+  theme: { 'bg-1': '#0b1424', 'bg-2': '#192c40', 'bg-3': '#153c38', accent: '#80edd2' },
+  chain: { chainId: 8453, chainName: 'Base', rpcUrls: ['https://mainnet.base.org'],
+    nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://basescan.org'] },
+  providers: {
+    default: 'pinata',
+    pinata: { uploadUrl: 'https://api.pinata.cloud/pinning/pinFileToIPFS' },
+    local: { apiUrl: 'http://127.0.0.1:5001' },
+    gateway: 'https://ipfs.io/ipfs/',
+    ucanAuth: null, // Planned: email → UCAN delegation. No authorization flow implemented yet.
+  },
+  about: {
+    title: 'About DecentHead', summary: 'The canonical, customizable web3 boilerplate for Decent dapps.',
+    sections: [ { title: 'Own the experience', body: 'Customize one config object and CSS properties. Widgets share a single wallet and IPFS session.' },
+      { title: 'Your data stays yours', body: 'The host dapp chooses backup contents, validates restored data, and controls opt-in pinning reward participation.' } ],
+  },
+  links: [{ label: 'Source · Apache-2.0 + NOTICE', url: 'https://github.com/TheJollyLaMa/DecentHead' }],
+  relatedDapps: [ { label: 'DecentBusking', url: 'https://github.com/TheJollyLaMa/DecentBusking' },
+    { label: 'DecentCanopy', url: 'https://github.com/TheJollyLaMa/DecentCanopy' } ],
+  supporterDnft: null, // See the complete listing / PayPal example in docs/ADOPTING.md.
+  // ipfsAdapter: yourVersion1HostAdapter,
+  // data: { export: async () => selectedData, import: async data => validateAndRestore(data) },
 };
