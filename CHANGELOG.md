@@ -4,6 +4,28 @@ All notable changes to **Decent Head** are documented here.
 
 ---
 
+## [v2.0.0] — 2026-10-21
+
+### Breaking
+
+- Remove the retired web3.storage / w3up client, browser script and login flow.
+- Replace implicit app-specific storage with explicit host adapters / data hooks.
+- Replace auto-connect and hard-coded supporter contracts with configured chain,
+  click-only wallet consent and configured supporter listings. Base is default.
+- Replace fixed ankh/menu styling with the v2 theme surface and clickable title.
+
+### Added
+
+- Pinata (user JWT/key or host worker), local Kubo, confirmed backup/restore,
+  opt-in community pins, and unchanged version 1 host capability contract.
+- EIP-6963 discovery, ethers v6 BrowserProvider, switch/add chain, wallet lifecycle
+  DOM events, mobile MetaMask links, and shared S12 widget sessions.
+- Config-driven About, related dapps, escrow and PayPal flows; planned UCAN seam.
+- Reduced-motion-aware animated background, versioned vendor manifest and guide.
+- S11 reusable release preparation: archive and metadata pins, release CID notes,
+  steward minting issue, 1000 supply / 10 USDC / Base / 1000 royalty bps.
+- Node test CI for host contract, config, wallet logic and supporter metadata.
+
 ## [v1.0.0] — 2026-03-13
 
 **Initial stable, forkable drop-in header for web3 data and IPFS projects.**

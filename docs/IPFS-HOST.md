@@ -5,19 +5,22 @@ schema, storage service or rewards program. The host owns its data, selected
 provider, serialization, encryption, wallet authorization and explicit
 upload/restore/pin/claim confirmation.
 
-The existing W3Up path remains the default for compatibility. Set
-`DECENT_CONFIG.ipfsMode = 'host'` and supply `ipfsAdapter` before the header
-connects to enable the new left-button controls. Host mode never falls back to
-W3Up if configuration is missing; it displays an error instead. It does not
-prompt for email, connect wallets, request credentials, inspect local storage,
-or upload on mount or button open. `enableIPFS: false` hides either path.
+In v2, supply `DECENT_CONFIG.ipfsAdapter` before loading the header module.
+The provider choices are always available, and adapter capabilities are opt-in.
+No capability is inferred from provider selection. Mounting or opening the
+header does not request credentials, inspect local storage, upload, or connect
+a wallet. `enableIPFS: false` hides the left button.
+
+The shared provider session supports Pinata and local Kubo; a host panel may
+use `window.DecentHead.getIpfs()` or retain its own provider. The header does
+not assume a host-owned provider has switched when the shared provider changes.
+See [ADOPTING.md](ADOPTING.md) for data hooks and provider configuration.
 
 ## Contract
 
 ```js
 window.DECENT_CONFIG = {
   ...window.DECENT_CONFIG,
-  ipfsMode: 'host',
   ipfsAdapter: {
     version: 1,
     label: 'My app',
@@ -109,7 +112,7 @@ inert mounting, opening by keyboard, separate states/actions, errors,
 Escape/focus restoration and a 390px viewport before enabling a consumer.
 
 Serve the repository locally and open [the two-host browser fixture](../test/ipfs-host.html)
-to inspect the opt-in path without W3Up, external dependencies or real data.
+to inspect the opt-in path without external services or real data.
 Its failure toggles exercise status and host-panel errors. The fixture is not
 linked from the production demo. The **Validate IPFS Host Contract** workflow
 runs dependency-free contract/syntax checks; browser checks remain separate.

@@ -1,140 +1,24 @@
-const _appTitleBase = new URL('../../../', import.meta.url).href;
-
+import { config } from '../../config.js';
+import { safeURL } from '../../ui.js';
 export class AppTitle extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-  }
-
+  constructor() { super(); this.attachShadow({ mode: 'open' }); }
   connectedCallback() {
-    this.render();
-    // Add menu toggle logic for ankh coins
-    // Use shadowRoot so events are inside the web component
-    this.shadowRoot.querySelectorAll('.ankh-coin').forEach(coin => {
-      coin.addEventListener('click', (e) => {
-        const menu = coin.parentElement.querySelector('.dropdown-menu.right-ankh-menu');
-        if (menu) {
-          menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-          e.stopPropagation();
-        }
-      });
-    });
-
-    // Add click listener to close dropdowns when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!this.shadowRoot) return;
-      const composedPath = e.composedPath();
-      const isInside = [...this.shadowRoot.querySelectorAll('.dropdown-menu.right-ankh-menu')]
-        .some(menu => composedPath.includes(menu));
-      if (!isInside) {
-        this.shadowRoot.querySelectorAll('.dropdown-menu.right-ankh-menu').forEach(menu => {
-          menu.style.display = 'none';
-        });
-      }
-    });
-
-    // Add event listener for peacock icon click
-    const peacockIcon = this.shadowRoot.querySelector('.peacock-icon');
-    if (peacockIcon) {
-      peacockIcon.addEventListener('click', () => {
-        console.log("Peacock icon clicked");
-        const aboutModal = this.shadowRoot.querySelector('about-modal') || document.querySelector('about-modal');
-        if (aboutModal && typeof aboutModal.open === 'function') {
-          aboutModal.open();
-        }
-      });
+    this.shadowRoot.innerHTML = `<style>
+      :host { display:block; text-align:center; min-width:0; }
+      button { cursor:pointer; font:700 clamp(18px,4vw,36px)/1.2 system-ui; border:0; background:none; color:var(--dh-title,var(--dh-text,#eef8ff)); text-shadow:0 0 20px var(--dh-accent,#80edd2); padding:8px; overflow-wrap:anywhere; }
+      button:focus-visible { outline:2px solid var(--dh-accent,#80edd2); border-radius:8px; }
+      img { width:1em; height:1em; object-fit:contain; margin-right:.3em; vertical-align:middle; }
+      p { font:12px/1.4 system-ui; margin:0; color:var(--dh-muted,#bdd0e4); }
+      </style><button aria-haspopup="dialog"></button><p></p>`;
+    const button = this.shadowRoot.querySelector('button');
+    button.textContent = config.appName;
+    const icon = safeURL(config.art.titleIcon);
+    if (icon) {
+      const image = document.createElement('img');
+      image.src = icon; image.alt = ''; button.prepend(image);
     }
-  }
-
-  render() {
-    const cfg = window.DECENT_CONFIG || {};
-    const appName = cfg.appName || 'Decent Header';
-    const subtitle = cfg.subtitle || '(Another Decent Frankenstein)';
-    // Split appName at the first space to place each word in a styled span,
-    // mirroring the original "Decent … Header" layout.
-    // For single-word names the peacock icon is simply appended at the end.
-    const spaceIndex = appName.indexOf(' ');
-    const nameLeft = spaceIndex >= 0 ? appName.slice(0, spaceIndex) : appName;
-    const nameRight = spaceIndex >= 0 ? appName.slice(spaceIndex + 1) : '';
-
-    this.shadowRoot.innerHTML = `
-<link rel="stylesheet" href="${_appTitleBase}css/header.css" />
-<div id="header-center">
-  <div id="app-title-wrapper">
-    <div class="ankh-left">
-      <div class="ankh-wrapper">
-        <div class="ankh-container">
-          <span class="ankh-coin">☥</span>
-          <ul class="dropdown-menu right-ankh-menu" style="display: none; list-style: none; padding: 0; margin: 0;">
-            <li>Option1</li>
-            <li class="menu-item">Option 2</li>
-          </ul>
-        </div>
-        <span class="sparkle sparkle-top">✨</span>
-        <span class="sparkle sparkle-bottom">✨</span>
-        <span class="sparkle sparkle-left">✨</span>
-        <span class="sparkle sparkle-right">✨</span>
-      </div>
-    </div>
-
-    <div class="title-center">
-      <h1 id="app-title">
-        <span class="title-symbol">::-⊡-</span>
-        <span class="title-main"> ${nameLeft}</span> <span class="peacock-icon" style="cursor: pointer;">🦚</span>${nameRight ? ` <span class="title-main"> ${nameRight} </span>` : ' '}
-        <span class="title-symbol">-⊡-::</span>
-      </h1>
-      <h3 id="app-subtitle">${subtitle}</h3>
-    </div>
-
-    <div class="ankh-right">
-      <right-ankh></right-ankh>
-    </div>
-
-
-
-    <about-modal></about-modal>
-    
-    <subscription-modal></subscription-modal>
-
-    
-  </div>
-</div>
-    `;
-    // --- Token balance logic for right ankh menu ---
-    // Only run after render, in connectedCallback.
-    setTimeout(() => {
-      // Find the right ankh menu's .token-balance element
-      const rightMenus = this.shadowRoot.querySelectorAll('.ankh-wrapper .dropdown-menu.right-ankh-menu');
-      if (!rightMenus || rightMenus.length < 2) return;
-      const rightMenu = rightMenus[1];
-      const tokenBalanceDiv = rightMenu.querySelector('.token-balance');
-      if (!tokenBalanceDiv) return;
-      // Dummy: replace with actual fetch logic as needed
-      async function fetchTokenBalance() {
-        // This should be replaced with actual wallet/token logic
-        // For demo, check if window.ethereum and a known address
-        if (window.ethereum && window.ethereum.selectedAddress) {
-          // For actual use, replace with ethers.js or web3.js call.
-          // We'll simulate with a random number for now.
-          // return await realBalanceLookup();
-          return 42.5; // DEMO value
-        }
-        return 0;
-      }
-      fetchTokenBalance().then(balance => {
-        console.log("Ommm token balance:", balance);
-        if (balance > 0) {
-          tokenBalanceDiv.innerHTML = `
-            <span style="color: white; font-size: 1.8em;">
-              ${balance} <img src="${_appTitleBase}img/Ommm.png" alt="Ommm token" style="height: 2em; vertical-align: middle;" />
-            </span>
-          `;
-        }
-      });
-    }, 0);
-
-    // Remove old about-trigger listener since replaced by peacock-icon outside
+    this.shadowRoot.querySelector('p').textContent = config.subtitle;
+    this.shadowRoot.querySelector('button').onclick = () => this.dispatchEvent(new CustomEvent('decenthead:about', { bubbles:true, composed:true }));
   }
 }
-
-customElements.define('app-title', AppTitle);
+if (!customElements.get('app-title')) customElements.define('app-title', AppTitle);

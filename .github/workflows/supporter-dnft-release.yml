@@ -1,0 +1,48 @@
+name: Prepare Supporter DNFT
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Existing release tag to prepare (never creates a release)
+        required: true
+        type: string
+      image:
+        description: Supporter image URI (defaults to repository img/IPFS_Logo.png)
+        required: false
+        type: string
+    secrets:
+      PINATA_JWT:
+        required: false
+  release:
+    types: [published]
+permissions:
+  contents: write
+  issues: write
+concurrency:
+  group: supporter-${{ github.repository }}-${{ inputs.tag || github.event.release.tag_name }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Archive, pin, annotate release and prepare steward issue
+        env:
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          SUPPORTER_IMAGE: ${{ inputs.image }}
+          PINATA_JWT: ${{ secrets.PINATA_JWT }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-supporter-release.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: supporter-dnft-preparation
+          path: |
+            supporter-source.tar.gz
+            supporter-metadata.json
+            supporter-mint-issue.md
