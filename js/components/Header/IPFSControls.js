@@ -23,9 +23,15 @@ export class IPFSControls extends HTMLElement {
         button { font: inherit; cursor: pointer; }
         button:focus-visible { outline: 3px solid var(--dh-accent, #73e8df); outline-offset: 3px; }
         button:disabled { cursor: not-allowed; opacity: .55; }
-        #open { display: grid; place-items: center; width: 64px; height: 64px;
-          border-radius: 50%; border: 1px solid var(--dh-accent, #73e8df); background: var(--dh-bg-1, #101b27); }
-        #open img { width: 38px; height: 38px; }
+        #open { display: grid; place-items: center; width: 64px; height: 64px; padding: 0; border: 0; border-radius: 50%;
+          background: radial-gradient(circle at 32% 28%, #ffffff2b, #ffffff08 62%), var(--dh-bg-1, #0a1220);
+          box-shadow: 0 0 0 2px color-mix(in srgb, var(--dh-accent-2, #8d7cf7) 25%, transparent),
+            0 0 26px color-mix(in srgb, var(--dh-accent-2, #8d7cf7) 50%, transparent), 0 10px 26px #0008;
+          transition: transform .18s ease; }
+        #open:hover { transform: scale(1.05); }
+        #open:active { transform: scale(.97); }
+        :host([data-docked]) #open { width: 100%; height: 100%; }
+        #open img { width: 60%; height: 60%; object-fit: contain; filter: drop-shadow(0 2px 6px #0009); }
         dialog { box-sizing: border-box; width: min(30rem, calc(100vw - 24px)); max-height: calc(100dvh - 24px);
           overflow: auto; border: 1px solid var(--dh-accent, #73e8df); border-radius: 12px; padding: 20px;
           background: var(--dh-bg-1, #101b27); color: var(--dh-text, #edf9ff); overflow-wrap: anywhere; }
@@ -38,7 +44,7 @@ export class IPFSControls extends HTMLElement {
           color: inherit; border: 1px solid #8faaba; border-radius: 6px; }
         #message { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
           overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-        @media (max-width: 600px) { #open { width: 42px; height: 42px; } #open img { width: 28px; height: 28px; } }
+        @media (max-width: 600px) { :host(:not([data-docked])) #open { width: 42px; height: 42px; } }
       </style>
       <button id="open" type="button" aria-label="Open IPFS controls" aria-haspopup="dialog">
         <img src="${escapeHTML(safeURL(config.art.ipfsIcon) || `${base}img/IPFS_Logo.png`)}" alt="" />

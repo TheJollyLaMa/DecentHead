@@ -22,8 +22,14 @@ listings. No credentials belong in this public file.
 - **About:** text-only configured sections, links, related dapps, supporter
   contract/token/chain/market links, and optional escrow/PayPal purchase paths.
 - **Theme:** inherited CSS properties `--dh-bg-1`, `--dh-bg-2`, `--dh-bg-3`,
-  `--dh-accent`, `--dh-title`, `--dh-text`, `--dh-muted`, `--dh-glow-opacity`.
-  Override `art.ipfsIcon`, `art.titleIcon`, and `--dh-background-image` for host art.
+  `--dh-accent`, `--dh-accent-2`, `--dh-title`, `--dh-title-font`, `--dh-text`, `--dh-muted`,
+  `--dh-glow-opacity`, `--dh-orbit-size`, `--dh-orbit-size-mobile`.
+  Override `art.ipfsIcon`, `art.titleIcon`, `art.walletIcon`, `art.titleEnds`, and
+  `--dh-background-image` for host art.
+- **Look:** the Decent orbit style shared by DecentBusking, DecentCanopy, and ArtFi:
+  an IPFS orbit on the left, a MetaMask fox orbit on the right whose ring spells out the
+  connected address, a neon title, and pulsing wires between them. All motion stops
+  under `prefers-reduced-motion`.
   The subtle animated background honors reduced-motion preferences.
 - **Widgets (S12):** `window.DecentHead.getIpfs()`, `.getWallet()`, and
   `.on('wallet', callback)` reuse the page’s shared sessions.
@@ -63,6 +69,13 @@ The steward must verify the deployed contract ABI, mint, deposit/list in
 escrow, and configure the resulting addresses/IDs. Repositories reusing the
 workflow must vendor the two `scripts/*supporter*.mjs` files, grant contents and
 issues write permissions, and configure the image if they lack our default.
+
+**Artwork.** Commit the release artwork at `img/supporter-dnft.png` before
+tagging; release preparation pins it to IPFS and uses `ipfs://<cid>` as the
+metadata image (an explicit `image` input still wins). DecentHead renders its
+card from the live head: serve the repo root, then run
+`BASE_URL=http://127.0.0.1:8790 node scripts/render-supporter-image.mjs 2.0.0`
+(edit `supporter/card.html` per release; its demo wallet is a placeholder).
 
 ## Planned authorization
 

@@ -3,8 +3,8 @@ window.DECENT_CONFIG = {
   version: '2.0.0',
   appName: 'DecentHead',
   subtitle: 'Your dapp. Your data. Your wallet.',
-  art: { ipfsIcon: null, titleIcon: null }, // Optional host image URLs; relative to the page.
-  theme: { 'bg-1': '#0b1424', 'bg-2': '#192c40', 'bg-3': '#153c38', accent: '#80edd2' },
+  art: { ipfsIcon: null, titleIcon: null, walletIcon: null, titleEnds: ['::-', '-::'] }, // Optional host image URLs (relative to the page) and title glyphs.
+  theme: { 'bg-1': '#0a1220', 'bg-2': '#10202a', 'bg-3': '#12302c', accent: '#7af0c6', 'accent-2': '#8d7cf7' },
   chain: { chainId: 8453, chainName: 'Base', rpcUrls: ['https://mainnet.base.org'],
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://basescan.org'] },
   providers: {

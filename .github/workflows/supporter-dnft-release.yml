@@ -7,7 +7,7 @@ on:
         required: true
         type: string
       image:
-        description: Supporter image URI (defaults to repository img/IPFS_Logo.png)
+        description: Supporter image URI (defaults to img/supporter-dnft.png at the tag, pinned to IPFS; else img/IPFS_Logo.png)
         required: false
         type: string
     secrets:
