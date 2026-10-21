@@ -21,7 +21,15 @@ All notable changes to **Decent Head** are documented here.
 - EIP-6963 discovery, ethers v6 BrowserProvider, switch/add chain, wallet lifecycle
   DOM events, mobile MetaMask links, and shared S12 widget sessions.
 - Config-driven About, related dapps, escrow and PayPal flows; planned UCAN seam.
+- The Decent orbit look restored as the family source for DecentBusking, DecentCanopy and
+  ArtFi: IPFS orbit (left) whose ring names the active provider, MetaMask fox orbit
+  (right) whose ring spells the connected address, sparks and constellation lines,
+  neon `::- title -::`, pulsing wires between the docks, twinkling starfield and
+  aurora drift. Theme via `--dh-accent-2`, `--dh-title-font`, `--dh-orbit-size`,
+  `art.walletIcon`, `art.titleEnds`. All motion stops under reduced motion.
 - Reduced-motion-aware animated background, versioned vendor manifest and guide.
+- Supporter artwork: `supporter/card.html` + `scripts/render-supporter-image.mjs`
+  render the live head to `img/supporter-dnft.png`; release preparation pins it.
 - S11 reusable release preparation: archive and metadata pins, release CID notes,
   steward minting issue, 1000 supply / 10 USDC / Base / 1000 royalty bps.
 - Node test CI for host contract, config, wallet logic and supporter metadata.

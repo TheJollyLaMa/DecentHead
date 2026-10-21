@@ -34,10 +34,12 @@ fetched from a CDN. ethers 6.16.0 is loaded locally only when needed.
 Edit `appName`, `subtitle`, `about.title`, `about.summary`, `about.sections`
 (`{title, body}`), `links` and `relatedDapps` (`{label, url}`). Text is escaped;
 links accept HTTP(S) and IPFS URIs, not script URLs. Set `theme` with names such
-as `accent`, `bg-1` through `bg-3`, `title`, `text`, and `muted`, or full
-`--dh-*` property names. Alternatively set CSS properties on `decent-header`;
-remove conflicting config theme keys to let external CSS win. Set `art.ipfsIcon`
-and `art.titleIcon` to host image URLs (relative URLs resolve against the page),
+as `accent`, `accent-2`, `bg-1` through `bg-3`, `title`, `text`, and `muted`, or full
+`--dh-*` property names. Also: `--dh-title-font`, `--dh-orbit-size`, `--dh-orbit-size-mobile`. Alternatively set CSS properties on `decent-header`;
+remove conflicting config theme keys to let external CSS win. Set `art.ipfsIcon`,
+`art.titleIcon`, and `art.walletIcon` (defaults to the MetaMask fox) to host image URLs
+(relative URLs resolve against the page), `art.titleEnds` to the two glyphs that frame
+the title (`['::-', '-::']` by default; `['', '']` hides them),
 and `--dh-background-image` to a CSS image/gradient for fully host-owned art.
 
 `chain` accepts `{chainId, chainName, nativeCurrency, rpcUrls,

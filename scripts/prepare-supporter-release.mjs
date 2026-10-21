@@ -20,19 +20,30 @@ async function pin(file, name, type) {
 }
 if (!jwt) console.log('::notice::PINATA_JWT absent: skipping IPFS pins. Steward must pin before minting.');
 const codeArchiveCid = await pin(readFileSync('supporter-source.tar.gz'), 'supporter-source.tar.gz', 'application/gzip');
-const metadata = buildSupporterMetadata({ repo, version: tag, commit, codeArchiveCid, image });
+// Convention: each release commits its Supporter artwork at img/supporter-dnft.png (see scripts/render-supporter-image.mjs).
+const IMAGE_PATH = 'img/supporter-dnft.png';
+let imageCid = null, imageURI = image;
+if (!imageURI) {
+  let artwork = null;
+  try { artwork = execFileSync('git', ['show', `${commit}:${IMAGE_PATH}`]); } catch { /* no release artwork committed */ }
+  if (artwork) {
+    imageCid = await pin(artwork, `supporter-dnft-${tag}.png`, 'image/png');
+    imageURI = imageCid ? `ipfs://${imageCid}` : `https://raw.githubusercontent.com/${repo}/${commit}/${IMAGE_PATH}`;
+  }
+}
+const metadata = buildSupporterMetadata({ repo, version: tag, commit, codeArchiveCid, image: imageURI });
 writeFileSync('supporter-metadata.json', JSON.stringify(metadata, null, 2) + '\n');
 const metadataCid = await pin(readFileSync('supporter-metadata.json'), 'supporter-metadata.json', 'application/json');
 const release = JSON.parse(run('gh', ['release', 'view', tag, '--repo', repo, '--json', 'body']));
 const start = '<!-- supporter-dnft:start -->', end = '<!-- supporter-dnft:end -->';
-const section = `${start}\n### Supporter DNFT preparation\n- Code archive CID: ${codeArchiveCid || 'not pinned (PINATA_JWT absent)'}\n- Metadata CID: ${metadataCid || 'not pinned (PINATA_JWT absent)'}\n- Source commit: ${commit}\n- Steward wallet signs all minting and escrow transactions.\n${end}`;
+const section = `${start}\n### Supporter DNFT preparation\n- Code archive CID: ${codeArchiveCid || 'not pinned (PINATA_JWT absent)'}\n- Image: ${metadata.image}\n- Metadata CID: ${metadataCid || 'not pinned (PINATA_JWT absent)'}\n- Source commit: ${commit}\n- Steward wallet signs all minting and escrow transactions.\n${end}`;
 const body = (release.body || '').replace(/<!-- supporter-dnft:start -->[\s\S]*?<!-- supporter-dnft:end -->/g, '').trim();
 writeFileSync('supporter-release-notes.md', `${body}\n\n${section}\n`);
 run('gh', ['release', 'edit', tag, '--repo', repo, '--notes-file', 'supporter-release-notes.md']);
 const title = `Mint Supporter DNFT for ${tag}`;
 const issueBody = `## Steward wallet checklist (no private keys in CI)\n\n` +
   `- Repository: ${repo}\n- Version: ${tag}\n- Commit: ${commit}\n` +
-  `- Code archive CID: ${codeArchiveCid || 'PIN REQUIRED'}\n- Metadata CID: ${metadataCid || 'PIN REQUIRED'}\n` +
+  `- Code archive CID: ${codeArchiveCid || 'PIN REQUIRED'}\n- Image: ${metadata.image}${imageCid || image ? '' : ' (not pinned)'}\n- Metadata CID: ${metadataCid || 'PIN REQUIRED'}\n` +
   `- License: Apache-2.0 + NOTICE\n- Chain: Base (8453)\n- Supply: 1000\n- Price: 10 USDC\n- Royalty: 1000 bps (10%)\n\n` +
   `1. Verify both pins, archive contents, image, and metadata before signing. If pins were skipped, pin and update this issue.\n` +
   `2. DecentNFT.registerToken: metadata URI = ${metadataCid ? `ipfs://${metadataCid}` : 'REQUIRED'}, maxSupply = 1000, royaltyBps = 1000; set your royalty recipient and record the returned tokenId. Confirm the deployed ABI.\n` +
