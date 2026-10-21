@@ -36,6 +36,12 @@ window.DECENT_CONFIG = {
   /** Set to false to hide the IPFS / W3Up status bar entirely. */
   enableIPFS: true,
 
+  /**
+   * 'legacy' keeps the existing W3Up path. Opt into 'host' only after supplying
+   * ipfsAdapter as documented in docs/IPFS-HOST.md. No provider or data is inferred.
+   */
+  ipfsMode: 'legacy',
+
   /** Set to false to hide the "Share Data" toggle in the right-ankh menu. */
   enableShareData: true,
 

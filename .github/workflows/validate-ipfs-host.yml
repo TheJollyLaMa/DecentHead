@@ -1,0 +1,33 @@
+name: Validate IPFS Host Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - js/ipfs-host.js
+      - js/components/Header/IPFSControls.js
+      - js/components/Header/IPFSStatus.js
+      - test/ipfs-host*
+      - .github/workflows/validate-ipfs-host.yml
+  pull_request:
+    paths:
+      - js/ipfs-host.js
+      - js/components/Header/IPFSControls.js
+      - js/components/Header/IPFSStatus.js
+      - test/ipfs-host*
+      - .github/workflows/validate-ipfs-host.yml
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test test/ipfs-host.test.cjs
+      - run: node --check js/components/Header/IPFSControls.js
+      - run: node --check js/components/Header/IPFSStatus.js

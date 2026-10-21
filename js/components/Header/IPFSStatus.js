@@ -1,3 +1,5 @@
+import './IPFSControls.js';
+
 const _ipfsBase = new URL('../../../', import.meta.url).href;
 
 export class IPFSStatus extends HTMLElement {
@@ -8,6 +10,16 @@ export class IPFSStatus extends HTMLElement {
   }
 
   connectedCallback() {
+    const config = window.DECENT_CONFIG || {};
+    if (config.enableIPFS === false || config.ipfsMode === 'host') {
+      this.shadowRoot.replaceChildren();
+      if (config.enableIPFS !== false) {
+        const controls = document.createElement('ipfs-controls');
+        controls.adapter = config.ipfsAdapter;
+        this.shadowRoot.appendChild(controls);
+      }
+      return;
+    }
     console.warn("IPFSStatus connectedCallback fired");
     this.render();
     this.renderWaitingModal();

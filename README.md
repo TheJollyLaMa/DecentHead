@@ -56,6 +56,15 @@ In this first stable release, the goals are intentionally focused:
 
 The component uses **Web Components / Custom Elements** with Shadow DOM — no framework, no bundler, no dependencies beyond a couple of CDN scripts.
 
+### Opt-in host-owned IPFS controls
+
+The new `ipfsMode: 'host'` path lets the left IPFS button open app-owned backup,
+public replication and reward-participation controls independently. It does
+not upload on click, assume a data schema, request credentials on mount, or
+promise rewards. The legacy W3Up path remains the default until each consumer
+deliberately migrates. See the [v1 adapter contract and migration gates](docs/IPFS-HOST.md).
+No BigNuten, Busking or Canopy production adapter is enabled by this addition.
+
 ---
 
 ## ⚡ Quick Start — Drop-In Integration
