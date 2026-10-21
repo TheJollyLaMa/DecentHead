@@ -39,6 +39,11 @@ All notable changes to **Decent Head** are documented here.
   a static ENS image as well as stopped CSS animations.
 - Compact expandable IPFS/About dialogs, contextual provider fields, prominent
   sticky close controls, Escape and outside-click dismissal.
+- Wallet ring alignment: one shared rotor, a common text/icon radius and a
+  reserved logo arc replace the independently animated, overlapping icon cluster.
+- Themed ankh menu skeletons beside the title: Admin on the left, My Profile on
+  the right; intentionally inert items, with outside-click/Escape dismissal and
+  responsive mobile placement. No legacy menu actions or permissions restored.
 - Dated $10 USDC front/back Supporter artwork using the resolved
   `thejollylama.eth` creator identity; rotatable HTML and standard metadata
   fields for the DecentMarket two-sided 3D gallery.

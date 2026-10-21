@@ -13,3 +13,34 @@ jobs:
       - run: npm test
       - name: Check first-party JavaScript syntax
         run: find js scripts -name '*.js' -not -path 'js/vendor/*' -o -name '*.mjs' | xargs -n 1 node --check
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Check wallet orbit geometry, menus and header flows
+        env:
+          BASE_URL: http://127.0.0.1:8790
+          SCREENSHOT_DIR: browser-screenshots
+        run: |
+          python3 -m http.server 8790 --bind 127.0.0.1 &
+          server=$!
+          trap 'kill "$server"' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent --output /dev/null "$BASE_URL"; then break; fi
+            sleep 1
+          done
+          curl --fail --silent --output /dev/null "$BASE_URL"
+          node test/browser-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: header-browser-screenshots
+          path: browser-screenshots
+          if-no-files-found: ignore

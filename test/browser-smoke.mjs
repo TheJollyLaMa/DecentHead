@@ -18,6 +18,58 @@ async function pageFor(options = {}) {
   return page;
 }
 async function shot(page, name) { if (shots) await page.screenshot({ path: `${shots}/${name}.png`, fullPage: true }); }
+async function checkAnkhMenus(page) {
+  const url = page.url();
+  for (const [menu, item] of [['Admin menu', 'Admin'], ['Profile menu', 'My Profile']]) {
+    const trigger = page.getByRole('button', { name: menu, exact: true });
+    await trigger.click();
+    await page.getByRole('button', { name: item, exact: true }).click();
+    assert.equal(page.url(), url);
+    assert.equal(await page.getByRole('dialog').count(), 0);
+    assert.equal(await page.getByRole('button', { name: item, exact: true }).isVisible(), true);
+    const box = await page.getByRole('button', { name: item, exact: true }).boundingBox();
+    const viewport = page.viewportSize();
+    assert.ok(box.x >= 0 && box.x + box.width <= viewport.width);
+    assert.ok(box.y >= 0 && box.y + box.height <= viewport.height);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.getByRole('button', { name: item, exact: true }).isVisible(), false);
+    await trigger.click();
+    await page.locator('main').click({ position: { x: 8, y: 8 } });
+    assert.equal(await page.getByRole('button', { name: item, exact: true }).isVisible(), false);
+  }
+}
+async function checkWalletOrbit(page) {
+  const measurements = await page.locator('wallet-connect .account-orbit').evaluate(rotor => {
+    const animation = rotor.getAnimations()[0];
+    animation?.pause();
+    const results = [];
+    for (const time of [0, 4500, 9000, 13500]) {
+      if (animation) animation.currentTime = time;
+      const box = rotor.getBoundingClientRect(), size = rotor.offsetWidth;
+      const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      const icons = [...rotor.querySelectorAll('.account-logos img')].map(img => {
+        const rect = img.getBoundingClientRect();
+        return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+      });
+      const text = rotor.querySelector('text'), matrix = text.getScreenCTM();
+      const glyphs = [...text.textContent].flatMap((char, index) => {
+        if (char.trim() === '') return [];
+        const rect = text.getExtentOfChar(index);
+        return [new DOMPoint(rect.x + rect.width / 2, rect.y + rect.height / 2).matrixTransform(matrix)];
+      });
+      results.push({
+        radii: icons.map(icon => Math.hypot(icon.x - center.x, icon.y - center.y) / size),
+        clearance: Math.min(...icons.flatMap(icon => glyphs.map(glyph => Math.hypot(icon.x - glyph.x, icon.y - glyph.y) / size))),
+      });
+    }
+    animation?.play();
+    return results;
+  });
+  for (const measurement of measurements) {
+    for (const radius of measurement.radii) assert.ok(Math.abs(radius - .4) < .005, `Logo radius ${radius} must match the text ring`);
+    assert.ok(measurement.clearance > .09, `Text/logo clearance ${measurement.clearance} must preserve the reserved arc`);
+  }
+}
 try {
   const desktop = await pageFor({ viewport: { width: 1440, height: 900 } });
   await desktop.goto(base);
@@ -27,6 +79,7 @@ try {
   const animation = () => desktop.evaluate(() => getComputedStyle(document.querySelector('decent-header').shadowRoot.querySelector('.dh-background'), '::after').animationName);
   assert.equal(await animation(), 'dh-drift');
   await shot(desktop, 'desktop');
+  await checkAnkhMenus(desktop);
   await desktop.getByRole('button', { name: 'DecentHead', exact: true }).click();
   await desktop.getByRole('heading', { name: 'About DecentHead' }).waitFor();
   await shot(desktop, 'about');
@@ -58,6 +111,7 @@ try {
   await mobile.getByRole('link', { name: 'Open MetaMask' }).waitFor();
   assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await shot(mobile, 'mobile-no-wallet');
+  await checkAnkhMenus(mobile);
   await mobile.getByRole('button', { name: 'Open IPFS controls' }).click();
   await mobile.getByText('Storage provider', { exact: true }).waitFor();
   const modalBounds = await mobile.getByRole('dialog').boundingBox();
@@ -97,10 +151,16 @@ try {
   await injected.getByRole('button', { name: 'Disconnect wallet' }).waitFor();
   await injected.getByText('thejollylama.eth · Base', { exact: true }).waitFor();
   assert.equal(await injected.locator('wallet-connect .account-logos img').count(), 4);
+  await checkWalletOrbit(injected);
+  await checkAnkhMenus(injected);
   assert.equal(await injected.locator('wallet-connect .spark.chain:visible').count(), 4);
   assert.equal(await injected.evaluate(() => window.mockMethods.filter(method => method === 'eth_requestAccounts').length), 1);
   assert.equal(await injected.evaluate(() => window.DecentHead.getWallet().snapshot().chainId), '0x2105');
   await shot(injected, 'wallet-connected');
+  await injected.setViewportSize({ width: 390, height: 844 });
+  await checkWalletOrbit(injected);
+  await shot(injected, 'mobile-wallet-connected');
+  await injected.setViewportSize({ width: 1280, height: 720 });
   await injected.evaluate(() => window.mockWallet.emit('accountsChanged', ['0x2222222222222222222222222222222222222222']));
   assert.equal(await injected.evaluate(() => window.DecentHead.getWallet().snapshot().address), '0x2222222222222222222222222222222222222222');
   await injected.getByText('0x2222…2222 · Base', { exact: true }).waitFor();
@@ -110,7 +170,7 @@ try {
   await injected.evaluate(() => window.mockWallet.emit('chainChanged', '0x7a69'));
   assert.equal(await injected.locator('wallet-connect .spark.chain:visible').count(), 0);
   await injected.emulateMedia({ reducedMotion: 'reduce' });
-  assert.equal(await injected.locator('wallet-connect .account-logos').evaluate(el => getComputedStyle(el).animationName), 'none');
+  assert.equal(await injected.locator('wallet-connect .account-orbit').evaluate(el => getComputedStyle(el).animationName), 'none');
   await injected.waitForFunction(() => document.querySelector('decent-header').shadowRoot.querySelector('wallet-connect').shadowRoot.querySelector('.account-logos img').currentSrc.endsWith('Ens_Eth_Breathe-still.png'));
   await injected.getByRole('button', { name: 'Disconnect wallet' }).click();
   assert.equal(await injected.evaluate(() => window.DecentHead.getWallet().snapshot().connected), false);

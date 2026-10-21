@@ -30,14 +30,17 @@ export class WalletConnect extends HTMLElement {
         border:1px solid color-mix(in srgb,var(--dh-accent,#7af0c6) 55%,transparent); border-radius:999px; padding:3px 10px; text-decoration:none; }
       select { max-width:150px; }
       select:focus-visible,a:focus-visible { outline:2px solid var(--dh-accent,#7af0c6); outline-offset:2px; }
-      .account-logos { position:absolute; inset:0; pointer-events:none; animation:dh-spin 18s linear infinite; opacity:.35; }
+      .account-orbit { position:absolute; inset:0; pointer-events:none; animation:dh-spin 18s linear infinite; }
+      .account-orbit .ring { position:absolute; inset:0; width:100%; height:100%; overflow:visible; animation:none; }
+      .account-orbit .ring text { dominant-baseline:central; }
+      .account-logos { position:absolute; inset:0; opacity:.35; }
       .account-logos img { position:absolute; left:50%; top:50%; width:10%; height:10%; border-radius:50%;
         transform:translate(-50%,-50%) rotate(var(--angle)) translateY(calc(var(--orb-size) * -.4));
         filter:drop-shadow(0 0 5px var(--dh-accent,#7af0c6)); }
       .orb[data-state="connected"] .account-logos { opacity:1; }
       .spark.chain { background:none; border:0; border-radius:50%; width:8%; height:8%; object-fit:contain; }
       .identity-note { font-size:10px; color:var(--dh-muted,#b9cfe0); margin:0; text-align:center; }
-      @media(prefers-reduced-motion:reduce) { .account-logos { animation:none; } }
+      @media(prefers-reduced-motion:reduce) { .account-orbit { animation:none; } }
       #status { margin:0; color:var(--dh-muted,#b9cfe0); letter-spacing:.04em; overflow-wrap:anywhere; }
       [hidden] { display:none !important; }
       @media(max-width:600px) { :host { font-size:10.5px; } .meta { max-width:104px; gap:3px; } select { max-width:100px; } select,a { padding:2px 7px; } }
@@ -47,7 +50,7 @@ export class WalletConnect extends HTMLElement {
     const logos = document.createElement('div');
     logos.className = 'account-logos';
     logos.setAttribute('aria-hidden', 'true');
-    for (const angle of [58, 74, 90, 106]) {
+    for (const angle of [180, 204, 228, 252]) {
       const picture = document.createElement('picture');
       const still = document.createElement('source');
       still.media = '(prefers-reduced-motion: reduce)';
@@ -59,8 +62,10 @@ export class WalletConnect extends HTMLElement {
       picture.append(still, image);
       logos.append(picture);
     }
-    this.shadowRoot.querySelector('.orb').append(logos);
-    this.shadowRoot.querySelector('.ring path').setAttribute('d', 'M100,100 m-80,0 a80,80 0 1,0 160,0 a80,80 0 1,0 -160,0');
+    const orbit = document.createElement('div');
+    orbit.className = 'account-orbit';
+    orbit.append(this.shadowRoot.querySelector('.ring'), logos);
+    this.shadowRoot.querySelector('.orb').append(orbit);
     this.shadowRoot.querySelectorAll('.spark').forEach((spark, i) => {
       if (i % 2) return;
       const image = document.createElement('img');
@@ -116,16 +121,13 @@ export class WalletConnect extends HTMLElement {
     root.querySelector('.identity-note').textContent = state.ensStatus === 'unavailable' ? 'ENS unavailable · showing address' : '';
     setRing(root, '', state.connected ? 'connected' : 'idle');
     const path = root.querySelector('textPath');
-    path.removeAttribute('textLength');
-    path.removeAttribute('lengthAdjust');
-    path.setAttribute('startOffset', '50%');
-    path.setAttribute('text-anchor', 'middle');
-    const prefix = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-    const suffix = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-    prefix.textContent = state.connected ? state.ensName || state.address.slice(0, 6) : this.connecting ? 'CHECK WALLET' : 'CONNECT';
-    suffix.textContent = state.connected ? state.address.slice(-4) : 'WALLET';
-    suffix.setAttribute('dx', '88');
-    path.replaceChildren(prefix, suffix);
+    // Reserve the final arc for the four logos; text and logos share one rotor.
+    path.setAttribute('textLength', '342');
+    path.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+    path.setAttribute('startOffset', '2%');
+    path.textContent = state.connected
+      ? `${state.ensName || state.address.slice(0, 6)} · ${state.address.slice(-4)}`
+      : this.connecting ? 'CHECK YOUR WALLET' : 'CONNECT WALLET';
     const chainIcon = state.connected ? CHAIN_ICONS[Number(BigInt(state.chainId))] : null;
     root.querySelectorAll('.spark.chain').forEach(image => {
       image.hidden = !chainIcon;

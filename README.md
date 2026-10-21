@@ -21,11 +21,15 @@ listings. No credentials belong in this public file.
   Click the fox again to disconnect this dapp. Mainnet ENS reverse names are
   forward-verified before display, with an address fallback on failure.
   Four ENS/ETH Breathe icons orbit the button; bundled chain glyphs mark the
-  connected Base, Ethereum, or Optimism network.
+  connected Base, Ethereum, or Optimism network. Text and icons share one rotor,
+  with a reserved icon arc on the same radius, so they stay aligned.
 - **About:** text-only configured sections, links, related dapps, supporter
   contract/token/chain/market links, and optional escrow/PayPal purchase paths.
   Both dialogs use compact expandable sections, a sticky close button, Escape,
   and outside-click dismissal. Credentials and advanced fields start collapsed.
+- **Ankh menus:** themed left/right title controls expose **Admin** and
+  **My Profile** placeholders. Item clicks intentionally do nothing; no account
+  access, navigation or privileges are attached. Escape/outside click closes them.
 - **Theme:** inherited CSS properties `--dh-bg-1`, `--dh-bg-2`, `--dh-bg-3`,
   `--dh-accent`, `--dh-accent-2`, `--dh-title`, `--dh-title-font`, `--dh-text`, `--dh-muted`,
   `--dh-glow-opacity`, `--dh-orbit-size`, `--dh-orbit-size-mobile`.
@@ -108,8 +112,9 @@ No email authorization or delegation verification is claimed in v2.
 
 v2 removes the retired storage client and its email login. There is no automatic
 fitness-data/localStorage snapshotting or automatic wallet connection. Old
-identity settings still work, but token/subscription flags and ankh menus are
-not part of the v2 head. Configure `ipfsAdapter` or explicit `data` hooks,
+identity settings still work, but legacy token/subscription flags and ankh-menu
+actions are not part of the v2 head. The new ankh menus are inert skeletons.
+Configure `ipfsAdapter` or explicit `data` hooks,
 `chain`, and `supporterDnft`; see the adoption guide for migration details.
 
 ## 📄 License

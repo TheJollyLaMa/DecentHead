@@ -8,7 +8,7 @@ Copy these files, preserving their relative paths, into
 - `js/main.js`, `js/config.js`, `js/ui.js`, `js/wallet.js`, `js/wallet-logic.js`, `js/ens.js`, `js/chains.js`,
   `js/ipfs.js`, `js/ipfs-host.js`
 - `js/components/Header.js`
-- `js/components/Header/{AppTitle,WalletConnect,AboutModal,IPFSStatus,IPFSControls,orbit}.js`
+- `js/components/Header/{AppTitle,WalletConnect,AboutModal,IPFSStatus,IPFSControls,AnkhMenu,orbit}.js`
 - `js/vendor/ethers.umd.min.js`, `js/vendor/ethers.LICENSE.md`
 - `css/decent-head.css`, `img/IPFS_Logo.png`, `img/MetaMaskFox.png`,
   `img/Ens_Eth_Breathe.png`, `img/Ens_Eth_Breathe-still.png`, `img/chains/*.svg`
@@ -31,6 +31,15 @@ adapter itself imports modules). No CSS, fonts, wallet scripts, or assets are
 fetched from a CDN. ethers 6.16.0 is loaded locally only when needed.
 The optional purchase route additionally needs `supporter/buy.html`,
 `supporter/buy.js`, and `js/supporter-purchase.js` at the same relative paths.
+
+## Ankh menu skeletons
+
+Two themed ankh buttons flank the title (below it on mobile). The left opens
+**Admin** and the right opens **My Profile**. These are intentionally inert
+placeholder buttons: clicking an item does not navigate, open another view,
+request a wallet, or grant privileges. The menus close on outside click or
+Escape; Escape returns focus to their trigger. These are not an authorization
+system or a profile implementation. Host-specific behavior is future work.
 
 ## Branding and chain
 
