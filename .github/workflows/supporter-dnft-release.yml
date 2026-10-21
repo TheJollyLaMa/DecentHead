@@ -6,20 +6,24 @@ on:
         description: Existing release tag to prepare (never creates a release)
         required: true
         type: string
-      image:
-        description: Supporter image URI (defaults to img/supporter-dnft.png at the tag, pinned to IPFS; else img/IPFS_Logo.png)
-        required: false
+      release_date:
+        description: Frozen canonical UTC date, e.g. 2026-10-21T20:00:00.000Z (release, not mint)
+        required: true
+        type: string
+      ens_rpc_url:
+        description: Public credential-free Ethereum mainnet RPC for creator ENS resolution
+        required: true
         type: string
     secrets:
       PINATA_JWT:
-        required: false
+        required: true
   release:
     types: [published]
 permissions:
   contents: write
   issues: write
 concurrency:
-  group: supporter-${{ github.repository }}-${{ inputs.tag || github.event.release.tag_name }}
+  group: supporter-${{ github.repository }}
   cancel-in-progress: false
 jobs:
   prepare:
@@ -28,17 +32,38 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Provision artwork renderer
+        run: npm ci && npx playwright install --with-deps chromium
+      - name: Render actual release header front and provenance back
+        env:
+          RELEASE_DATE: ${{ inputs.release_date || github.event.release.published_at }}
+          ENS_RPC_URL: ${{ inputs.ens_rpc_url || vars.SUPPORTER_ENS_RPC_URL }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          # GitHub published_at omits milliseconds; canonicalize without changing the instant.
+          export RELEASE_DATE="$(node -e 'process.stdout.write(new Date(process.env.RELEASE_DATE).toISOString())')"
+          python3 -m http.server 8790 --bind 127.0.0.1 > supporter-render-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in 1 2 3 4 5; do
+            if curl --fail --silent http://127.0.0.1:8790/supporter/card.html > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/render-supporter-image.mjs "$TAG"
       - name: Archive, pin, annotate release and prepare steward issue
         env:
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
-          SUPPORTER_IMAGE: ${{ inputs.image }}
+          RELEASE_DATE: ${{ inputs.release_date || github.event.release.published_at }}
           PINATA_JWT: ${{ secrets.PINATA_JWT }}
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/prepare-supporter-release.mjs
+        run: |
+          export RELEASE_DATE="$(node -e 'process.stdout.write(new Date(process.env.RELEASE_DATE).toISOString())')"
+          node scripts/prepare-supporter-release.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: supporter-dnft-preparation
@@ -46,3 +71,7 @@ jobs:
             supporter-source.tar.gz
             supporter-metadata.json
             supporter-mint-issue.md
+            supporter-release.json
+            supporter-front.png
+            supporter-back.png
+            supporter-presentation.html

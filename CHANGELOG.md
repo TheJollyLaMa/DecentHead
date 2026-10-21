@@ -33,6 +33,19 @@ All notable changes to **Decent Head** are documented here.
 - S11 reusable release preparation: archive and metadata pins, release CID notes,
   steward minting issue, 1000 supply / 10 USDC / Base / 1000 royalty bps.
 - Node test CI for host contract, config, wallet logic and supporter metadata.
+- A single fox-button connect/disconnect toggle, forward-verified mainnet ENS
+  names with a safe address fallback, the four ENS/ETH Breathe orbit icons and
+  connected-chain sparks (Base, Ethereum, Optimism). Reduced-motion users get
+  a static ENS image as well as stopped CSS animations.
+- Compact expandable IPFS/About dialogs, contextual provider fields, prominent
+  sticky close controls, Escape and outside-click dismissal.
+- Dated $10 USDC front/back Supporter artwork using the resolved
+  `thejollylama.eth` creator identity; rotatable HTML and standard metadata
+  fields for the DecentMarket two-sided 3D gallery.
+- A verified Base Supporter purchase landing page and a reusable scheduled
+  Discord release notifier. Notification requires registered public mint/listing
+  evidence, confirmed approved-contract state, an enabled webhook and durable
+  delivery markers. No keys, mints, or financial-return guarantees in automation.
 
 ## [v1.0.0] — 2026-03-13
 

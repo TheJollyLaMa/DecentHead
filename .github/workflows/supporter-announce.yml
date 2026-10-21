@@ -1,0 +1,59 @@
+name: Announce verified Supporter DNFT
+on:
+  schedule:
+    - cron: '17,47 * * * *'
+  release:
+    types: [published, edited]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published prepared release tag
+        required: true
+        type: string
+      mint_evidence:
+        description: Optional public evidence to register once; omit to verify registered evidence
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      tag:
+        required: false
+        type: string
+      mint_evidence:
+        required: false
+        type: string
+    secrets:
+      DISCORD_SUPPORTER_WEBHOOK:
+        required: true
+permissions:
+  contents: write
+concurrency:
+  group: supporter-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  announce:
+    if: ${{ vars.SUPPORTER_DISCORD_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Register supplied public evidence once (no Discord)
+        if: ${{ inputs.mint_evidence != '' }}
+        env:
+          TAG: ${{ inputs.tag }}
+          MINT_EVIDENCE: ${{ inputs.mint_evidence }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module -e 'import { writeFileSync } from "node:fs"; writeFileSync("supporter-evidence-input.json", JSON.stringify(JSON.parse(process.env.MINT_EVIDENCE)))'
+          node scripts/publish-supporter-assets.mjs --evidence supporter-evidence-input.json
+      - name: Discover registered pending releases, verify mint and listing, announce
+        env:
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
+          SCAN_RELEASES: ${{ inputs.tag == '' && github.event.release.tag_name == '' && 'true' || 'false' }}
+          DISCORD_SUPPORTER_WEBHOOK: ${{ secrets.DISCORD_SUPPORTER_WEBHOOK }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/announce-supporter-release.mjs

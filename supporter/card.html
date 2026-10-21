@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=1200" />
   <title>DecentHead Supporter DNFT card</title>
-  <!-- Rendered to img/supporter-dnft.png by scripts/render-supporter-image.mjs; edit freely per release. -->
+  <!-- Live release header rendered by scripts/render-supporter-image.mjs. -->
   <style>
     html, body { margin:0; width:1200px; height:1200px; overflow:hidden; background:#060b14; color:#eef8ff; font-family:'Avenir Next','Trebuchet MS',system-ui,sans-serif; }
     .card { position:relative; box-sizing:border-box; width:1200px; height:1200px; padding:64px 40px 60px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; isolation:isolate;
@@ -25,15 +25,22 @@
     .chips { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
     .chips span { font:600 22px system-ui,sans-serif; padding:10px 22px; border-radius:999px; border:1px solid #7af0c677; background:#10202acc; color:#eef8ff; }
     .foot { font:600 22px system-ui,sans-serif; color:#9fb6c8; letter-spacing:.18em; text-transform:uppercase; }
+    .identity { font:600 20px/1.6 ui-monospace,monospace; text-align:center; }
+    .back-only { display:none; }
+    body.back .frame, body.back .tagline { display:none; }
+    body.back .back-only { display:block; font:500 30px/1.7 system-ui; text-align:center; max-width:960px; }
   </style>
   <script src="../decent.config.js"></script>
   <script>
-    // Artwork-only demo wallet (placeholder 0xDEC0DE… address) so the card shows the connected orbit; no real wallet is touched.
+    const artwork = new URLSearchParams(location.search);
+    const address = artwork.get('creatorAddress');
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address || '')) throw new Error('Resolved creatorAddress required');
+    // Read-only artwork adapter: address resolved through mainnet ENS by the renderer.
     window.ethereum = { isMetaMask: true, chainId: '0x2105',
       async request({ method }) {
-        if (method === 'eth_requestAccounts' || method === 'eth_accounts') return ['0xDEC0DEDEC0DEDEC0DEDEC0DEDEC0DEDEC0DE0001'];
+        if (method === 'eth_requestAccounts' || method === 'eth_accounts') return [address];
         if (method === 'eth_chainId') return this.chainId;
-        return null;
+        throw new Error('Unsupported read-only artwork request: ' + method);
       }, on() {}, removeListener() {} };
   </script>
   <script type="module" src="../js/main.js"></script>
@@ -44,13 +51,18 @@
     <div class="frame"><decent-header></decent-header></div>
     <h1 class="title">DecentHead</h1>
     <div class="version" id="version"></div>
+    <div class="identity" id="identity"></div>
+    <p class="back-only">Release source archived on IPFS · Edition of 1,000<br>Apache-2.0 + NOTICE<br>Support the work. No product ownership or financial return promised.<br>Royalties are not universally enforced.</p>
     <p class="tagline">IPFS on the left · your wallet on the right · your story in the center.<br />The web3 head every Decent dapp is built on.</p>
-    <div class="chips"><span>Edition of 1,000</span><span>Base</span><span>Code archived on IPFS</span><span>Apache-2.0 + NOTICE</span></div>
+    <div class="chips"><span>Edition of 1,000</span><span>Base · $10 USDC</span><span>Apache-2.0 + NOTICE</span></div>
     <div class="foot">A Decent Agency · github.com/TheJollyLaMa/DecentHead</div>
   </div>
   <script>
     const head = document.querySelector('decent-header');
     new ResizeObserver(() => document.querySelector('.frame').style.setProperty('--head-h', `${head.offsetHeight}px`)).observe(head);
-    document.getElementById('version').textContent = 'v' + (new URLSearchParams(location.search).get('version') || window.DECENT_CONFIG?.version || '');</script>
+    const params = new URLSearchParams(location.search);
+    document.getElementById('version').textContent = `${params.get('version')} · $10 USDC`;
+    document.getElementById('identity').textContent = `thejollylama.eth · ${params.get('creatorAddress')} · Release ${params.get('releaseDate')?.slice(0,10)}`;
+  </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 import { wallet } from '../../wallet.js';
 import { config } from '../../config.js';
-import { safeURL } from '../../ui.js';
+import { safeURL, escapeHTML } from '../../ui.js';
+import { CHAIN_ICONS } from '../../chains.js';
 import { orbitMarkup, orbitCSS, setRing } from './orbit.js';
 const base = new URL('../../../', import.meta.url).href;
 const chainName = chainId => {
@@ -25,21 +26,57 @@ export class WalletConnect extends HTMLElement {
       .orb[data-state="connected"] #connect { --glow:color-mix(in srgb,var(--dh-accent,#7af0c6) 78%,transparent);
         box-shadow:0 0 0 2px color-mix(in srgb,var(--dh-accent,#7af0c6) 18%,transparent),0 0 28px color-mix(in srgb,var(--dh-accent,#7af0c6) 45%,transparent),0 10px 26px #0008; }
       .meta { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px; max-width:200px; text-align:center; }
-      select,#forget,a { font:inherit; color:var(--dh-text,#eef8ff); background:color-mix(in srgb,var(--dh-bg-2,#10202a) 85%,transparent);
+      select,a { font:inherit; color:var(--dh-text,#eef8ff); background:color-mix(in srgb,var(--dh-bg-2,#10202a) 85%,transparent);
         border:1px solid color-mix(in srgb,var(--dh-accent,#7af0c6) 55%,transparent); border-radius:999px; padding:3px 10px; text-decoration:none; }
-      select { max-width:150px; } #forget { cursor:pointer; }
-      select:focus-visible,#forget:focus-visible,a:focus-visible { outline:2px solid var(--dh-accent,#7af0c6); outline-offset:2px; }
+      select { max-width:150px; }
+      select:focus-visible,a:focus-visible { outline:2px solid var(--dh-accent,#7af0c6); outline-offset:2px; }
+      .account-logos { position:absolute; inset:0; pointer-events:none; animation:dh-spin 18s linear infinite; opacity:.35; }
+      .account-logos img { position:absolute; left:50%; top:50%; width:10%; height:10%; border-radius:50%;
+        transform:translate(-50%,-50%) rotate(var(--angle)) translateY(calc(var(--orb-size) * -.4));
+        filter:drop-shadow(0 0 5px var(--dh-accent,#7af0c6)); }
+      .orb[data-state="connected"] .account-logos { opacity:1; }
+      .spark.chain { background:none; border:0; border-radius:50%; width:8%; height:8%; object-fit:contain; }
+      .identity-note { font-size:10px; color:var(--dh-muted,#b9cfe0); margin:0; text-align:center; }
+      @media(prefers-reduced-motion:reduce) { .account-logos { animation:none; } }
       #status { margin:0; color:var(--dh-muted,#b9cfe0); letter-spacing:.04em; overflow-wrap:anywhere; }
       [hidden] { display:none !important; }
-      @media(max-width:600px) { :host { font-size:10.5px; } .meta { max-width:104px; gap:3px; } select { max-width:100px; } select,#forget,a { padding:2px 7px; } }
-      </style>${orbitMarkup(`<button id="connect" type="button" aria-label="Connect wallet"><img alt="" src="${icon}" /></button>`)}
-      <div class="meta"><select aria-label="Choose wallet"></select><button id="forget" type="button" hidden>Forget wallet</button>
-      <a id="mobile" hidden>Open MetaMask</a><p id="status" role="status"></p></div>`;
+      @media(max-width:600px) { :host { font-size:10.5px; } .meta { max-width:104px; gap:3px; } select { max-width:100px; } select,a { padding:2px 7px; } }
+      </style>${orbitMarkup(`<button id="connect" type="button" aria-label="Connect wallet"><img alt="" src="${escapeHTML(icon)}" /></button>`)}
+      <div class="meta"><select aria-label="Choose wallet"></select>
+      <a id="mobile" hidden>Open MetaMask</a><p id="status" role="status"></p></div><p class="identity-note" role="status"></p>`;
+    const logos = document.createElement('div');
+    logos.className = 'account-logos';
+    logos.setAttribute('aria-hidden', 'true');
+    for (const angle of [58, 74, 90, 106]) {
+      const picture = document.createElement('picture');
+      const still = document.createElement('source');
+      still.media = '(prefers-reduced-motion: reduce)';
+      still.srcset = `${base}img/Ens_Eth_Breathe-still.png`;
+      const image = document.createElement('img');
+      image.src = `${base}img/Ens_Eth_Breathe.png`;
+      image.alt = '';
+      image.style.setProperty('--angle', `${angle}deg`);
+      picture.append(still, image);
+      logos.append(picture);
+    }
+    this.shadowRoot.querySelector('.orb').append(logos);
+    this.shadowRoot.querySelector('.ring path').setAttribute('d', 'M100,100 m-80,0 a80,80 0 1,0 160,0 a80,80 0 1,0 -160,0');
+    this.shadowRoot.querySelectorAll('.spark').forEach((spark, i) => {
+      if (i % 2) return;
+      const image = document.createElement('img');
+      image.className = 'spark chain';
+      image.style.cssText = spark.style.cssText;
+      image.alt = '';
+      image.hidden = true;
+      spark.after(image);
+      spark.dataset.chainPlaceholder = '';
+    });
     this.update = () => this.renderState();
     window.addEventListener('decenthead:providers', this.update);
     window.addEventListener('decenthead:wallet', this.update);
     this.shadowRoot.querySelector('#connect').onclick = async () => {
-      if (this.connecting || wallet.snapshot().connected) return;
+      if (this.connecting) return;
+      if (wallet.snapshot().connected) { wallet.forget(); return; }
       this.connecting = true;
       let failure;
       this.renderState();
@@ -50,10 +87,9 @@ export class WalletConnect extends HTMLElement {
       finally {
         this.connecting = false;
         this.renderState();
-        if (failure) { this.shadowRoot.querySelector('#status').textContent = failure; setRing(this.shadowRoot, '✦ CONNECTION CANCELLED ✦ TAP THE FOX TO TRY AGAIN ', 'error'); }
+        if (failure) { this.shadowRoot.querySelector('#status').textContent = failure; setRing(this.shadowRoot, '✦ CONNECTION FAILED ✦ TAP THE FOX TO TRY AGAIN ', 'error'); }
       }
     };
-    this.shadowRoot.querySelector('#forget').onclick = () => wallet.forget();
     this.renderState();
   }
   disconnectedCallback() {
@@ -68,17 +104,34 @@ export class WalletConnect extends HTMLElement {
     if ([...select.options].some(option => option.value === previous)) select.value = previous;
     select.hidden = available.length < 2 || state.connected;
     connect.disabled = !state.connected && (this.connecting || !available.length);
-    connect.setAttribute('aria-label', state.connected ? `Wallet connected: ${state.address}` : 'Connect wallet');
-    connect.title = state.connected ? state.address : available.length ? 'Connect wallet' : 'No injected wallet detected';
-    root.querySelector('#forget').hidden = !state.connected;
+    connect.setAttribute('aria-label', state.connected ? 'Disconnect wallet' : 'Connect wallet');
+    connect.title = state.connected ? `${state.ensName || state.address} · click to disconnect this dapp` : available.length ? 'Connect wallet' : 'No injected wallet detected';
+    connect.setAttribute('aria-pressed', String(state.connected));
     const mobile = root.querySelector('#mobile');
     mobile.hidden = !!available.length;
     mobile.href = `https://metamask.app.link/dapp/${location.host}${location.pathname}${location.search}${location.hash}`;
     root.querySelector('#status').textContent = state.connected
-      ? `${state.address.slice(0, 6)}…${state.address.slice(-4)} · ${chainName(state.chainId)}`
+      ? `${state.ensName || `${state.address.slice(0, 6)}…${state.address.slice(-4)}`} · ${chainName(state.chainId)}`
       : this.connecting ? 'Check your wallet…' : available.length ? 'Connect only when you choose.' : 'No injected wallet detected.';
-    if (state.connected) setRing(root, `${state.address} ✦ `, 'connected');
-    else setRing(root, this.connecting ? '✦ WAITING FOR YOUR WALLET ✦ APPROVE IN METAMASK ' : '✦ CONNECT WALLET ✦ ONLY WHEN YOU CHOOSE ', 'idle');
+    root.querySelector('.identity-note').textContent = state.ensStatus === 'unavailable' ? 'ENS unavailable · showing address' : '';
+    setRing(root, '', state.connected ? 'connected' : 'idle');
+    const path = root.querySelector('textPath');
+    path.removeAttribute('textLength');
+    path.removeAttribute('lengthAdjust');
+    path.setAttribute('startOffset', '50%');
+    path.setAttribute('text-anchor', 'middle');
+    const prefix = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+    const suffix = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+    prefix.textContent = state.connected ? state.ensName || state.address.slice(0, 6) : this.connecting ? 'CHECK WALLET' : 'CONNECT';
+    suffix.textContent = state.connected ? state.address.slice(-4) : 'WALLET';
+    suffix.setAttribute('dx', '88');
+    path.replaceChildren(prefix, suffix);
+    const chainIcon = state.connected ? CHAIN_ICONS[Number(BigInt(state.chainId))] : null;
+    root.querySelectorAll('.spark.chain').forEach(image => {
+      image.hidden = !chainIcon;
+      if (chainIcon) image.src = chainIcon;
+    });
+    root.querySelectorAll('[data-chain-placeholder]').forEach(spark => { spark.hidden = !!chainIcon; });
   }
 }
 if (!customElements.get('wallet-connect')) customElements.define('wallet-connect', WalletConnect);

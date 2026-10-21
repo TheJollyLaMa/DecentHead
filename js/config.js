@@ -1,6 +1,7 @@
 export const defaults = {
   version: '2.0.0', appName: 'DecentHead', subtitle: 'Your dapp. Your data. Your wallet.',
   enableIPFS: true, theme: {}, art: { ipfsIcon: null, titleIcon: null, walletIcon: null, titleEnds: ['::-', '-::'] },
+  ens: { enabled: true, rpcUrl: 'https://ethereum-rpc.publicnode.com' },
   chain: { chainId: 8453, chainName: 'Base', rpcUrls: ['https://mainnet.base.org'],
     nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, blockExplorerUrls: ['https://basescan.org'] },
   providers: { default: 'pinata', pinata: { uploadUrl: 'https://api.pinata.cloud/pinning/pinFileToIPFS' },

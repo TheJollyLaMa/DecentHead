@@ -1,6 +1,6 @@
 import { config } from '../../config.js';
 import { wallet, loadEthers } from '../../wallet.js';
-import { escapeHTML as esc, safeURL, modalStyles } from '../../ui.js';
+import { escapeHTML as esc, safeURL, modalStyles, modalHeading, bindModalClose } from '../../ui.js';
 const ZERO = '0x0000000000000000000000000000000000000000';
 const ESCROW_ABI = [
   'function getListing(uint256) view returns (tuple(address nftContract,uint256 tokenId,uint256 priceETH,address priceToken,uint256 priceAmount,uint256 available,bool active,string note))',
@@ -20,18 +20,18 @@ export class AboutModal extends HTMLElement {
   render() {
     const about = config.about, supporter = config.supporterDnft;
     this.shadowRoot.innerHTML = `<style>${modalStyles}</style><dialog aria-labelledby="about-title">
-      <h2 id="about-title">${esc(about.title)}</h2><p>${esc(about.summary)}</p>
-      ${(about.sections || []).map(section => `<section><h3>${esc(section.title)}</h3><p>${esc(section.body || section.text)}</p></section>`).join('')}
+      ${modalHeading(about.title, 'about-title', '✦')}<p>${esc(about.summary)}</p>
       <ul>${links(config.links)}</ul>
-      ${config.relatedDapps.length ? `<section><h3>Related Decent dapps</h3><ul>${links(config.relatedDapps)}</ul></section>` : ''}
-      ${supporter ? `<section><h3>${esc(supporter.title || 'Supporter DNFT')}</h3>
-        <p>Contract: ${esc(supporter.contract)} · Token: ${esc(supporter.tokenId)} · Chain: ${esc(supporter.chain?.chainName || supporter.chain?.chainId)}</p>
+      ${(about.sections || []).map(section => `<details><summary>${esc(section.title)}</summary><p>${esc(section.body || section.text)}</p></details>`).join('')}
+      ${config.relatedDapps.length ? `<details><summary>↗ Related Decent dapps</summary><ul>${links(config.relatedDapps)}</ul></details>` : ''}
+      ${supporter ? `<section><h3>◈ ${esc(supporter.title || 'Supporter DNFT')}</h3>
         <ul>${links(supporter.marketUrl ? [{ label: 'View on marketplace', url: supporter.marketUrl }] : [])}</ul>
         ${supporter.escrowAddress && supporter.listingId !== undefined ? '<button id="buy">Buy from escrow</button>' : ''}
-        ${supporter.paypal?.clientId ? `<label>Recipient wallet <input id="recipient" autocomplete="off" /></label><button id="paypal">Buy with PayPal — ${esc(supporter.paypal.amount)} ${esc(supporter.paypal.currency || 'USD')}</button><div id="paypal-buttons"></div><p>PayPal purchases require manual fulfillment after merchant verification. Payment is not an on-chain mint.</p>` : ''}
+        <details><summary>Token details</summary><p class="quiet">Contract: ${esc(supporter.contract)} · Token: ${esc(supporter.tokenId)} · Chain: ${esc(supporter.chain?.chainName || supporter.chain?.chainId)}</p></details>
+        ${supporter.paypal?.clientId ? `<details><summary>Pay with PayPal</summary><label>Recipient wallet <input id="recipient" autocomplete="off" /></label><button id="paypal">Buy with PayPal — ${esc(supporter.paypal.amount)} ${esc(supporter.paypal.currency || 'USD')}</button><div id="paypal-buttons"></div><p class="quiet">Merchant-verified manual fulfillment. This payment does not mint on-chain.</p></details>` : ''}
         <p id="purchase-status" role="status"></p></section>` : ''}
-      <button id="close">Close</button></dialog>`;
-    this.shadowRoot.querySelector('#close').onclick = () => this.close();
+      <p class="quiet">Your wallet. Your data. Always your choice.</p></dialog>`;
+    bindModalClose(this.shadowRoot.querySelector('dialog'));
     this.shadowRoot.querySelector('#buy')?.addEventListener('click', () => this.buy());
     this.shadowRoot.querySelector('#paypal')?.addEventListener('click', () => this.paypal());
   }
@@ -51,7 +51,13 @@ export class AboutModal extends HTMLElement {
       const listing = await escrow.getListing(cfg.listingId);
       if (listing.nftContract.toLowerCase() !== cfg.contract.toLowerCase() || listing.tokenId !== BigInt(cfg.tokenId)) throw new Error('Listing does not match configured supporter token');
       if (!listing.active || listing.available < 1n || await escrow.getNFTBalance(cfg.contract, cfg.tokenId) < 1n) throw new Error('Supporter token is not available in escrow');
-      const price = listing.priceETH > 0n ? `${ethers.formatEther(listing.priceETH)} ETH` : `${listing.priceAmount} raw token units (${listing.priceToken === ZERO ? cfg.paymentToken : listing.priceToken})`;
+      if (cfg.expectedPriceAmount !== undefined && (listing.priceETH !== 0n ||
+          listing.priceAmount !== BigInt(cfg.expectedPriceAmount) ||
+          listing.priceToken.toLowerCase() !== cfg.paymentToken.toLowerCase())) {
+        throw new Error('Listing price changed. Reload and review the listing before purchasing.');
+      }
+      const price = cfg.expectedPriceAmount === '10000000' && cfg.paymentToken?.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+        ? '10 USDC' : listing.priceETH > 0n ? `${ethers.formatEther(listing.priceETH)} ETH` : `${listing.priceAmount} raw token units (${listing.priceToken === ZERO ? cfg.paymentToken : listing.priceToken})`;
       if (!confirm(`Buy one supporter DNFT for ${price}? Review the wallet transaction before signing.`)) { this.status('Cancelled.'); return; }
       let tx;
       if (listing.priceETH > 0n) {
