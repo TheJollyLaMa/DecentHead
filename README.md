@@ -4,7 +4,7 @@
 
 [![Version](https://img.shields.io/badge/version-v1.0.0-brightgreen?style=flat-square)](https://github.com/TheJollyLaMa/DecentHead/releases/tag/v1.0.0)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-00e5ff?style=flat-square)](https://thejollylama.github.io/DecentHead/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)](LICENSE)
 [![Early Supporter DNFT](https://img.shields.io/badge/Early%20Access-10%20DNFTs%20%40%20%24100%20USDC-8b00ff?style=flat-square&logo=ethereum)](https://thejollylama.github.io/DecentMarket/)
 
 ---
@@ -229,7 +229,8 @@ Please keep PRs scoped to one concern. The project values simplicity: no bundler
 
 ## 📄 License
 
-This project is released under the [MIT License](LICENSE).  
+Code: [Apache-2.0](LICENSE) · Art and docs: [CC BY 4.0](LICENSES/CC-BY-4.0.txt) · Please keep the [NOTICE](NOTICE) and give The Jolly LaMa / A Decent Agency a head nod when you reuse this work.
+Support the work with a [Supporter DNFT](https://thejollylama.github.io/DecentMarket/).  
 Built with ❣️💗❣️ by ⚕️ 🦚 ⚸ The Jolly LaMa & The RoboSoul 🤖 🦚 ⚕️
 
 ---
