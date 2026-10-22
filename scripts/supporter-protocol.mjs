@@ -71,6 +71,17 @@ export function verifySnapshot(m, e, s) {
   requireThat(BigInt(s.escrowBalance) >= BigInt(l.available), 'Escrow stock insufficient');
   return { ...e, verifiedBlock: s.blockNumber, available: String(l.available) };
 }
+export function registeredEvidence(manifest, input) {
+  validateManifest(manifest);
+  if (input?.schema === 1) {
+    requireThat(input.repo === manifest.repo && input.version === manifest.version
+      && input.metadataURI === manifest.metadataURI, 'Registered evidence release mismatch');
+    return validateEvidence(input.mint);
+  }
+  // Studio exports raw evidence. verifyOnChain still binds its receipt and URI
+  // to this release; never rewrite an already published asset just to wrap it.
+  return validateEvidence(input);
+}
 export async function verifyOnChain(m, e) {
   validateManifest(m); validateEvidence(e);
   const provider = new ethers.JsonRpcProvider(e.rpcUrl);
@@ -120,11 +131,11 @@ export function buildDiscordPayload(m, verified) {
   const clean = value => String(value).replace(/[@`*_~<>]/g, '').slice(0, 160);
   return {
     username: 'Decent DNFT Bot', allowed_mentions: { parse: [] },
-    content: `${clean(m.repo)} ${clean(m.version)} supporter DNFT is minted and listed: $10 USDC on Base. Support the release; no financial return guaranteed. Royalties are not universal.`,
+    content: `${clean(m.repo)} ${clean(m.version)} Supporter DNFT is minted and listed: $10 USDC on Base. Support the new version and collect a dated artifact of Decent history; no financial return guaranteed. Royalties are not universal.`,
     embeds: [{
       title: `${clean(m.version)} · Supporter DNFT`, url: verified.purchaseUrl,
       description: `${clean(m.summary || 'A new Decent release: support our ongoing development and keep a dated artifact of the work.')}\n\nCreator: ${CREATOR}\nRelease date: ${m.releaseDate.slice(0, 10)}\n[Purchase](${verified.purchaseUrl}) · [Release notes](https://github.com/${m.repo}/releases/tag/${encodeURIComponent(m.version)})\nCollect, keep or resell where supported; resale value is not guaranteed.`,
-      image: { url: `https://ipfs.io/ipfs/${m.front.slice(7)}` },
+      image: { url: `https://gateway.pinata.cloud/ipfs/${m.front.slice(7)}` },
     }],
   };
 }
