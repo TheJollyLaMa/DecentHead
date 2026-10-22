@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ethers, nftABI, USDC, APPROVED_NFT, APPROVED_ESCROW, pendingReleases, validateManifest, validateEvidence, verifySnapshot, buildDiscordPayload, deliverDiscordRelease, alreadySent, assertDeliveryNotPending, pendingMarkerName, markerName } from '../scripts/supporter-protocol.mjs';
 import { buildSupporterMetadata } from '../scripts/supporter-metadata.mjs';
+import { registeredEvidence } from '../scripts/supporter-protocol.mjs';
 
 const nft = APPROVED_NFT;
 const escrow = APPROVED_ESCROW;
@@ -29,6 +30,17 @@ test('single and batch ERC1155 mint evidence verifies Base $10 USDC stocked list
     const { manifest, evidence, snapshot } = fixture(batch);
     assert.equal(verifySnapshot(manifest, evidence, snapshot).available, '998');
   }
+});
+test('registered evidence accepts unchanged Studio exports and strict release envelopes', () => {
+  const { manifest, evidence, snapshot } = fixture();
+  const envelope = { schema: 1, repo: manifest.repo, version: manifest.version, metadataURI: manifest.metadataURI, mint: evidence };
+  assert.deepEqual(registeredEvidence(manifest, evidence), evidence);
+  assert.deepEqual(registeredEvidence(manifest, envelope), evidence);
+  for (const patch of [{ repo: 'Other/Project' }, { version: 'different' }, { metadataURI: 'ipfs://wrong' }])
+    assert.throws(() => registeredEvidence(manifest, { ...envelope, ...patch }), /release mismatch/);
+  assert.throws(() => registeredEvidence(manifest, {}));
+  assert.throws(() => verifySnapshot(manifest, registeredEvidence(manifest, evidence),
+    { ...snapshot, metadataURI: 'ipfs://another-release' }), /metadata URI/);
 });
 const invalid = {
   'missing receipt': s => { s.receipt = null; },
@@ -90,7 +102,8 @@ test('Discord payload suppresses mentions, carries front image, purchase route a
   assert.match(payload.content, /no financial return guaranteed/);
   assert.match(payload.content, /Royalties are not universal/);
   assert.equal(payload.embeds[0].url, evidence.purchaseUrl);
-  assert.equal(payload.embeds[0].image.url, 'https://ipfs.io/ipfs/bafyfixturefront');
+  assert.equal(payload.embeds[0].image.url, 'https://gateway.pinata.cloud/ipfs/bafyfixturefront');
+  assert.match(payload.content, /dated artifact of Decent history/);
   assert.throws(() => buildDiscordPayload(manifest, {}), /Verification required/);
 });
 test('persisted marker dedupes repo/version and rejects corrupt or mismatched marker', () => {

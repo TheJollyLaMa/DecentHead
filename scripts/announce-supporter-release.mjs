@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { alreadySent, assertDeliveryNotPending, deliverDiscordRelease, markerName, pendingReleases, validateEvidence, validateManifest, verifyOnChain } from './supporter-protocol.mjs';
+import { alreadySent, assertDeliveryNotPending, deliverDiscordRelease, markerName, pendingReleases, registeredEvidence, validateManifest, verifyOnChain } from './supporter-protocol.mjs';
 
 const { TAG: tag, GITHUB_REPOSITORY: repo, DISCORD_SUPPORTER_WEBHOOK: webhook } = process.env;
 if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '')) throw new Error('Repository required');
@@ -28,8 +28,7 @@ if (alreadySent(marker, manifest)) {
   if (!webhook || !/^https:\/\/(?:discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/[\w.-]+$/.test(webhook)) throw new Error('DISCORD_SUPPORTER_WEBHOOK required');
   if (!release.assets.some(a => a.name === 'supporter-evidence.json')) throw new Error('Register supporter-evidence.json once after signing; no evidence is inferred');
   const envelope = download('supporter-evidence.json');
-  if (envelope.repo !== repo || envelope.version !== tag || envelope.metadataURI !== manifest.metadataURI) throw new Error('Registered evidence release mismatch');
-  const evidence = validateEvidence(envelope.mint);
+  const evidence = registeredEvidence(manifest, envelope);
   const verified = await verifyOnChain(manifest, evidence);
   const purchase = await fetch(evidence.purchaseUrl, { signal: AbortSignal.timeout(30000), redirect: 'error' });
   if (!purchase.ok) throw new Error('Purchase URL is not reachable');

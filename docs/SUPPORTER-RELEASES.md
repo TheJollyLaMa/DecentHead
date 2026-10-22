@@ -108,6 +108,10 @@ The input file is the raw evidence object above. The uploaded envelope is:
 `{schema:1, repo, version, metadataURI, mint: evidence}`. Both CLI and verifier
 reject unapproved contract addresses before delivery. Evidence references the
 prepared metadata URI; it is still an unverified claim until runtime RPC checks.
+The verifier also accepts the unchanged raw `supporter-evidence.json` exported
+by Market Studio and attached to its official release. It still binds that
+evidence to the release through the actual mint receipt, token URI and listing;
+an existing public evidence asset is never rewritten just to wrap it.
 The CLI refuses replacement; if a steward registered incorrect evidence,
 reconcile any possible Discord delivery first, then explicitly remove only the
 incorrect evidence asset and register corrected public evidence.
