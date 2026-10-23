@@ -10,8 +10,12 @@ export function buildSupporterMetadata({ repo, version, commit, codeArchiveCid =
       version, repo_url: `https://github.com/${repo}`,
       commit: `https://github.com/${repo}/commit/${commit}`,
       artifact_cid: codeArchiveCid ? `ipfs://${codeArchiveCid}` : null,
+      ...(release.siteCid ? { site: `ipfs://${release.siteCid}` } : {}),
+      ...(release.ensName ? { ens: release.ensName } : {}),
     },
   });
+  if (release?.siteCid) properties.site_cid = release.siteCid;
+  if (release?.ensName) properties.ens_name = release.ensName;
   return {
     name: `${repo.split('/')[1]} ${version} Supporter DNFT`,
     description: `Support ${repo} ${version}. Source licensed Apache-2.0 + NOTICE. Steward-signed minting; no ownership or financial return promised.`,

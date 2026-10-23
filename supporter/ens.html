@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Point ENS at a Decent release</title>
+  <link rel="icon" href="../img/IPFS_Logo.png" />
+  <style>
+    body { margin:0; background:#080e18; color:#edf8ff; font:16px/1.6 system-ui,sans-serif; }
+    main { max-width:720px; margin:48px auto; padding:24px; } a { color:#80edd2; }
+    button { background:#10202a; color:inherit; padding:12px 20px; border:1px solid #80edd2; border-radius:12px; cursor:pointer; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    dl { display:grid; grid-template-columns:max-content 1fr; gap:6px 16px; } dt { color:#9fb6c8; } dd { margin:0; overflow-wrap:anywhere; font-family:ui-monospace,monospace; font-size:14px; }
+    .ok { color:#80edd2; } .warn { color:#ffcf70; } [hidden] { display:none; }
+  </style>
+  <script src="../decent.config.js"></script>
+  <script type="module" src="./ens.js"></script>
+</head>
+<body>
+  <decent-header></decent-header>
+  <main>
+    <h1>Point ENS at a Decent release</h1>
+    <p>One <code>setContenthash</code> transaction on Ethereum mainnet, signed by the name's owner. Nothing else is changed.</p>
+    <dl>
+      <dt>Name</dt><dd id="name">…</dd>
+      <dt>Release</dt><dd id="release">…</dd>
+      <dt>Owner</dt><dd id="owner">…</dd>
+      <dt>Resolver</dt><dd id="resolver">…</dd>
+      <dt>Current</dt><dd id="current">…</dd>
+      <dt>New</dt><dd id="next">…</dd>
+    </dl>
+    <p id="status" role="status">Reading ENS on Ethereum mainnet…</p>
+    <button id="sign" type="button" disabled>Connect owner wallet and sign</button>
+    <p>Preview the pinned site before signing. Gas is paid in ETH on mainnet.</p>
+  </main>
+</body>
+</html>
