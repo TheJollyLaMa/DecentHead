@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1200" />
+  <title>Decent product Supporter DNFT card</title>
+  <!-- Rendered by scripts/render-product-supporter.mjs for any Decent dapp; the front frames its tagged site. -->
+  <style>
+    html, body { margin:0; width:1200px; height:1200px; overflow:hidden; background:#060b14; color:#eef8ff; font-family:'Avenir Next','Trebuchet MS',system-ui,sans-serif; }
+    .card { position:relative; box-sizing:border-box; width:1200px; height:1200px; padding:58px 40px 54px; display:flex; flex-direction:column; align-items:center; justify-content:space-between; isolation:isolate;
+      background:radial-gradient(ellipse at 50% 38%,#8d7cf733,transparent 55%),radial-gradient(circle at 50% 52%,#7af0c61f,transparent 46%),linear-gradient(160deg,#0a1220,#10202a 52%,#12302c); }
+    .card::before { content:''; position:absolute; inset:0; z-index:-1; opacity:.8;
+      background-image:radial-gradient(1.5px 1.5px at 7% 12%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 21% 33%,#cfe 50%,transparent 51%),radial-gradient(1.8px 1.8px at 33% 8%,#fff 50%,transparent 51%),
+        radial-gradient(1px 1px at 46% 27%,#dcf 50%,transparent 51%),radial-gradient(1.4px 1.4px at 61% 14%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 72% 36%,#cfe 50%,transparent 51%),
+        radial-gradient(1.6px 1.6px at 88% 9%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 94% 31%,#dcf 50%,transparent 51%);
+      background-size:600px 400px; }
+    .card::after { content:''; position:absolute; inset:22px; border-radius:44px; z-index:-1; border:2px solid #7af0c655; box-shadow:0 0 40px #7af0c633, inset 0 0 60px #8d7cf722; }
+    .kicker { font:700 26px ui-monospace,Menlo,monospace; letter-spacing:.32em; color:#7af0c6; text-shadow:0 0 14px #7af0c6; }
+    .frame { width:1040px; height:585px; border-radius:28px; overflow:hidden; border:1px solid #8d7cf766; box-shadow:0 0 60px #8d7cf744, 0 30px 80px #000a; background:#0a1220; }
+    .frame img { display:block; width:100%; height:100%; object-fit:cover; object-position:top center; }
+    .title { margin:0; max-width:1100px; font:800 104px/1 'Avenir Next','Trebuchet MS',system-ui,sans-serif; color:#e9fff7; text-align:center; overflow-wrap:anywhere;
+      text-shadow:0 0 6px #fff8,0 0 22px #7af0c6,0 0 50px #7af0c6,0 0 90px #8d7cf7b3; }
+    .version { font:700 42px ui-monospace,Menlo,monospace; color:#b9a9ff; letter-spacing:.12em; text-shadow:0 0 16px #8d7cf7; margin-top:-18px; }
+    .tagline { margin:0; max-width:1040px; font:600 28px/1.4 system-ui,sans-serif; color:#cfe3f0; text-align:center; letter-spacing:.03em; }
+    .tagline:empty { display:none; }
+    .chips { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+    .chips span { font:600 22px system-ui,sans-serif; padding:10px 22px; border-radius:999px; border:1px solid #7af0c677; background:#10202acc; color:#eef8ff; }
+    .foot { font:600 22px system-ui,sans-serif; color:#9fb6c8; letter-spacing:.18em; text-transform:uppercase; }
+    .identity { font:600 20px/1.6 ui-monospace,monospace; text-align:center; }
+    .back-only { display:none; }
+    body.back .frame, body.back .tagline { display:none; }
+    body.back .back-only { display:block; font:500 30px/1.7 system-ui; text-align:center; max-width:960px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="kicker">::- SUPPORTER DNFT -::</div>
+    <div class="frame"><img id="preview" alt="Tagged release site" src="product-preview.png" /></div>
+    <h1 class="title" id="title"></h1>
+    <div class="version" id="version"></div>
+    <div class="identity" id="identity"></div>
+    <p class="back-only">Release source and runnable site archived on IPFS · Edition of 1,000<br>Apache-2.0 + NOTICE<br>Support the work. No product ownership or financial return promised.<br>Royalties are not universally enforced.</p>
+    <p class="tagline" id="tagline"></p>
+    <div class="chips"><span>Edition of 1,000</span><span>Base · $10 USDC</span><span>Apache-2.0 + NOTICE</span></div>
+    <div class="foot" id="foot"></div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const repo = params.get('repo') || '', address = params.get('creatorAddress') || '';
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('repo and resolved creatorAddress required');
+    const text = (id, value) => { document.getElementById(id).textContent = value; };
+    text('title', (params.get('name') || repo.split('/')[1]).slice(0, 40));
+    text('version', `${params.get('version')} · $10 USDC`);
+    text('identity', `thejollylama.eth · ${address} · Release ${params.get('releaseDate')?.slice(0, 10)}`);
+    text('tagline', (params.get('tagline') || '').slice(0, 160));
+    text('foot', `A Decent Agency · github.com/${repo}`);
+  </script>
+</body>
+</html>
