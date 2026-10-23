@@ -71,8 +71,8 @@ export function ensDeployment(manifest, state, newerSiteCids = []) {
   requireThat(state?.name === manifest.ensName, 'ENS state is for a different name');
   if (state.cid === manifest.siteCid) return { status: 'deployed', cid: state.cid };
   if (state.cid && newerSiteCids.includes(state.cid)) return { status: 'superseded', cid: state.cid };
-  requireThat(state.resolver !== ethers.ZeroAddress, `${manifest.ensName} has no resolver; set one before pointing content`);
-  return { status: 'pending', current: state.cid };
+  // Still pending (not a failure): the steward issue explains the missing registration or resolver.
+  return { status: 'pending', current: state.cid, ...(state.resolver === ethers.ZeroAddress ? { needsResolver: true } : {}) };
 }
 
 export function signingLink(manifest) {
@@ -87,6 +87,8 @@ export function ensIssueBody(m, state) {
     `The ${m.version} Supporter DNFT is minted and verified on Base. Its exact-commit site is pinned, and the Discord announcement waits until ENS serves it.\n\n` +
     `- Name: \`${m.ensName}\`\n- Owner (must sign): \`${state.owner}\`\n- Resolver: \`${state.resolver}\`\n` +
     `- Current content: ${state.cid ? `\`ipfs://${state.cid}\`` : 'none'}\n- New content: \`ipfs://${m.siteCid}\` (${m.repo}@${m.commit.slice(0, 7)})\n\n` +
+    (state.owner === ethers.ZeroAddress ? `> **${m.ensName} is not registered.** Create the subname under its parent (owner wallet) first.\n\n` : '') +
+    (state.resolver === ethers.ZeroAddress ? `> **No resolver is set.** In the ENS app, set the Public Resolver (0xF29100983E058B709F3D539b0c765937B804AC15) for this name, then use the link below.\n\n` : '') +
     `**[Open the one-click signing page](${signingLink(m)})** — connect the owner wallet on Ethereum mainnet, check the CIDs, and sign one \`setContenthash\` transaction.\n\n` +
     `Preview first: https://ipfs.filebase.io/ipfs/${m.siteCid}/\n\n` +
     `The announce workflow re-checks ENS every 30 minutes. Once the record matches it records \`supporter-ens-deployed.json\` on the release, closes this issue and announces on Discord.\n`;

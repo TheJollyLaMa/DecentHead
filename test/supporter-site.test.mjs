@@ -83,7 +83,12 @@ test('ENS gate: deployed, superseded, pending, unconfigured', () => {
   assert.deepEqual(ensDeployment(manifest, state(null)), { status: 'pending', current: null });
   const { ensName, ...noEns } = manifest;
   assert.deepEqual(ensDeployment(noEns, null), { status: 'unconfigured' });
-  assert.throws(() => ensDeployment(manifest, state(null, { resolver: '0x0000000000000000000000000000000000000000' })), /no resolver/);
+  const zero = '0x0000000000000000000000000000000000000000';
+  assert.deepEqual(ensDeployment(manifest, state(null, { resolver: zero })), { status: 'pending', current: null, needsResolver: true });
+  const body = ensIssueBody(manifest, state(null, { resolver: zero, owner: zero }));
+  assert.match(body, /No resolver is set/);
+  assert.match(body, /is not registered/);
+  assert.doesNotMatch(ensIssueBody(manifest, state(null)), /No resolver|not registered/);
   assert.throws(() => ensDeployment(manifest, { ...state(CID), name: 'other.eth' }), /different name/);
 });
 
