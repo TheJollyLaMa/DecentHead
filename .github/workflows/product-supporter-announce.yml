@@ -1,0 +1,64 @@
+name: Announce product Supporter DNFT (reusable)
+# Called on a schedule by any Decent dapp (see templates/supporter/). Verifies registered mint evidence
+# on Base, holds Discord until the release's ENS name serves its pinned site (steward issue + signing
+# link), then announces once. Reads and writes the CALLER repository's releases and issues.
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Prepared release tag; empty scans all releases awaiting delivery
+        required: false
+        type: string
+        default: ''
+      mint_evidence:
+        description: Optional public Studio evidence JSON to register once (requires tag)
+        required: false
+        type: string
+        default: ''
+      head_ref:
+        description: Full DecentHead commit SHA; must equal the ref in the caller's uses line
+        required: true
+        type: string
+      ens_rpc_url:
+        description: Public credential-free Ethereum mainnet RPC for the ENS deployment check
+        required: false
+        type: string
+        default: https://ethereum-rpc.publicnode.com
+    secrets:
+      DISCORD_SUPPORTER_WEBHOOK:
+        required: true
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate kit pin
+        env:
+          HEAD_REF: ${{ inputs.head_ref }}
+        run: |
+          if ! [[ "$HEAD_REF" =~ ^[0-9a-f]{40}$ ]]; then echo "::error::head_ref must be a full DecentHead commit SHA"; exit 1; fi
+      - uses: actions/checkout@v4
+        with:
+          repository: TheJollyLaMa/DecentHead
+          ref: ${{ inputs.head_ref }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Register supplied public evidence once (no Discord)
+        if: ${{ inputs.mint_evidence != '' }}
+        env:
+          TAG: ${{ inputs.tag }}
+          MINT_EVIDENCE: ${{ inputs.mint_evidence }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module -e 'import { writeFileSync } from "node:fs"; writeFileSync("supporter-evidence-input.json", JSON.stringify(JSON.parse(process.env.MINT_EVIDENCE)))'
+          node scripts/publish-supporter-assets.mjs --evidence supporter-evidence-input.json
+      - name: Verify mint and listing, gate on ENS, announce once
+        env:
+          TAG: ${{ inputs.tag }}
+          SCAN_RELEASES: ${{ inputs.tag == '' && 'true' || 'false' }}
+          DISCORD_SUPPORTER_WEBHOOK: ${{ secrets.DISCORD_SUPPORTER_WEBHOOK }}
+          SUPPORTER_ENS_RPC_URL: ${{ inputs.ens_rpc_url }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/announce-supporter-release.mjs

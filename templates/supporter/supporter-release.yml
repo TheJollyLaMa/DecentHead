@@ -1,0 +1,29 @@
+name: Prepare Supporter DNFT
+# Standard Decent Supporter release (DecentHead product kit). Copy to .github/workflows/ and replace
+# DECENTHEAD_SHA (both places) with one full DecentHead commit SHA. See
+# https://github.com/TheJollyLaMa/DecentHead/blob/main/docs/SUPPORTER-PRODUCTS.md
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Published release tag to prepare
+        required: true
+permissions:
+  contents: write
+  issues: write
+concurrency:
+  group: supporter-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    uses: TheJollyLaMa/DecentHead/.github/workflows/product-supporter-prepare.yml@DECENTHEAD_SHA
+    with:
+      tag: ${{ inputs.tag || github.event.release.tag_name }}
+      head_ref: DECENTHEAD_SHA
+      product_name: PRODUCT_NAME
+      tagline: PRODUCT_TAGLINE
+      ens_name: ${{ vars.SUPPORTER_ENS_NAME }}
+    secrets:
+      PINATA_JWT: ${{ secrets.PINATA_JWT }}

@@ -61,7 +61,7 @@ const issueBody = `## Steward wallet checklist (no private keys in CI)\n\n` +
   `2. DecentNFT_v0.2.registerToken(1000, "${manifest.metadataURI}", 0 /* Product */, royaltyReceiver, 1000); set your royalty recipient and record the returned tokenId. Confirm the deployed ABI.\n` +
   `3. mintProduct: use that tokenId, quantity 1000, steward treasury recipient; confirm actual ABI and mint authority.\n` +
   `4. DecentEscrow: approve/deposit the supporter tokens, create an active token listing for the registered contract/tokenId, quantity 1000, Base USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, priceAmount 10000000 (6 decimals), priceETH 0.\n` +
-  `5. Record NFT/escrow addresses, tokenId, listingId, royalty recipient, and transaction hashes. Configure supporterDnft and verify the purchase route. Then run supporter-announce.yml with public evidence per docs/SUPPORTER-RELEASES.md; it independently verifies chain state before Discord.\n` +
+  `5. Record NFT/escrow addresses, tokenId, listingId, royalty recipient, and transaction hashes. Configure supporterDnft and verify the purchase route. Then run supporter-announce.yml with public evidence per https://github.com/TheJollyLaMa/DecentHead/blob/main/docs/SUPPORTER-RELEASES.md; it independently verifies chain state before Discord.\n` +
   (ensName ? `6. Post-mint deployment: after verification the announce workflow opens "Point ${ensName} at ${tag} site" with a one-click signing link. Discord waits until ENS serves ipfs://${site.cid}.\n` : '') + `\n` +
   `No transactions have been submitted by this workflow. Steward verifies addresses/ABIs and signs in their wallet.\n`;
 writeFileSync('supporter-mint-issue.md', issueBody);
