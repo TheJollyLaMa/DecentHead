@@ -79,6 +79,7 @@ jobs:
           TAGLINE: ${{ inputs.tagline }}
           BASE_URL: http://127.0.0.1:8790
           PRODUCT_URL: http://127.0.0.1:8791/
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ -z "$RELEASE_DATE" ]; then
             RELEASE_DATE="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json publishedAt -q .publishedAt)"
