@@ -49,6 +49,35 @@ It also refreshes legacy `img/supporter-dnft.png` with the identical new front.
 Render from the exact release checkout before preparing; do not reuse a stale
 legacy image. Supply the release tag verbatim (no implicit `v` prefix).
 
+## Release site pin and ENS deployment (post-mint gate)
+
+Preparation also pins the **runnable site at the exact release commit**: every
+tracked blob except dot-paths (`.github`, `.gitignore`, …), symlinks and
+submodules, uploaded as one CIDv1 folder named after the repository. This is the
+same rule DecentCanopy uses for repo pins, so both produce the same CID for the
+same commit. The manifest records `siteCid` and, when repository variable
+**`SUPPORTER_ENS_NAME`** (e.g. `decenthead.decentagency.eth`) is set, `ensName`.
+Metadata exposes them as `properties.site_cid`, `properties.ens_name` and
+`properties.product.site`. Both fields are optional, so older frozen manifests
+stay valid.
+
+After the announce workflow verifies the mint and listing, it reads the name's
+mainnet contenthash (`SUPPORTER_ENS_RPC_URL`, default publicnode):
+
+- **matches `siteCid`** → uploads `supporter-ens-deployed.json` (name, CID,
+  owner, resolver, time), closes the steward issue, then announces on Discord
+  with a `https://<name>.limo` link;
+- **already serves a newer prepared release of the same name** → recorded as
+  `superseded` and announced, never rolled back;
+- **anything else** → opens or refreshes the issue *"Point `<name>` at `<version>`
+  site"* and **withholds Discord** (the run succeeds; it is pending, not failed).
+
+The issue links to [`supporter/ens.html`](../supporter/ens.html)
+(`?name=&cid=&repo=&version=`). That page reads owner, resolver and the current
+content, refuses any wallet other than the owner (NameWrapper-aware), switches to
+Ethereum mainnet and sends one `setContenthash`. No ENS key is ever in CI. Without
+`SUPPORTER_ENS_NAME` the site is still pinned and announcement behaves as before.
+
 ## Verify and announce after wallet transactions
 
 Create a lobby webhook named **Decent DNFT Bot**. Store it only as secret
@@ -182,8 +211,8 @@ Alternatively call the preparation/announcement workflows at a reviewed pinned
 commit with explicit inputs and secrets; checkout runs in the caller repository,
 so the caller must still carry the compatible scripts/card/vendor files.
 Include the pinned Playwright dev dependency and lockfile used by `npm ci`.
-Grant `contents: write` (and preparation `issues: write`), configure
-`PINATA_JWT`, `SUPPORTER_ENS_RPC_URL`, `SUPPORTER_DISCORD_ENABLED=true`, and
+Grant `contents: write` and `issues: write` (preparation and announcement), configure
+`PINATA_JWT`, `SUPPORTER_ENS_RPC_URL`, optional `SUPPORTER_ENS_NAME`, `SUPPORTER_DISCORD_ENABLED=true`, and
 `DISCORD_SUPPORTER_WEBHOOK`. Tags must
 already contain this tooling. No event watcher, cross-repo installation,
 contract deployment, mint, listing or purchase is performed by adding these

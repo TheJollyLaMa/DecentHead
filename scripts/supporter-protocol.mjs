@@ -23,6 +23,9 @@ export function validateManifest(m) {
   requireThat(m.chainId === 8453 && m.priceUSDC === '10000000' && m.quantity === '1000', 'Expected Base $10 USDC / 1000 edition standard');
   requireThat(/^ipfs:\/\/[^/\s]+$/.test(m.metadataURI || ''), 'Pinned prepared metadata URI required');
   for (const key of ['front', 'back', 'animation']) requireThat(/^ipfs:\/\/[^/\s]+$/.test(m[key] || ''), `Pinned ${key} required`);
+  // Optional (older frozen manifests predate them): the exact-commit site pin and the ENS name it deploys to.
+  requireThat(m.siteCid === undefined || /^b[a-z2-7]{20,}$/.test(m.siteCid), 'siteCid must be a CIDv1 folder');
+  requireThat(m.ensName === undefined || (m.siteCid && /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+eth$/.test(m.ensName)), 'ensName must be a .eth name with a siteCid');
   return m;
 }
 export function validateEvidence(e) {
@@ -134,7 +137,7 @@ export function buildDiscordPayload(m, verified) {
     content: `${clean(m.repo)} ${clean(m.version)} Supporter DNFT is minted and listed: $10 USDC on Base. Support the new version and collect a dated artifact of Decent history; no financial return guaranteed. Royalties are not universal.`,
     embeds: [{
       title: `${clean(m.version)} · Supporter DNFT`, url: verified.purchaseUrl,
-      description: `${clean(m.summary || 'A new Decent release: support our ongoing development and keep a dated artifact of the work.')}\n\nCreator: ${CREATOR}\nRelease date: ${m.releaseDate.slice(0, 10)}\n[Purchase](${verified.purchaseUrl}) · [Release notes](https://github.com/${m.repo}/releases/tag/${encodeURIComponent(m.version)})\nCollect, keep or resell where supported; resale value is not guaranteed.`,
+      description: `${clean(m.summary || 'A new Decent release: support our ongoing development and keep a dated artifact of the work.')}\n\nCreator: ${CREATOR}\nRelease date: ${m.releaseDate.slice(0, 10)}${m.ensName ? `\nLive on IPFS: https://${clean(m.ensName)}.limo` : ''}\n[Purchase](${verified.purchaseUrl}) · [Release notes](https://github.com/${m.repo}/releases/tag/${encodeURIComponent(m.version)})\nCollect, keep or resell where supported; resale value is not guaranteed.`,
       image: { url: `https://gateway.pinata.cloud/ipfs/${m.front.slice(7)}` },
     }],
   };
