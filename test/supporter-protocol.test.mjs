@@ -31,6 +31,24 @@ test('single and batch ERC1155 mint evidence verifies Base $10 USDC stocked list
     assert.equal(verifySnapshot(manifest, evidence, snapshot).available, '998');
   }
 });
+test('100-edition manifests require exactly 100 minted and never accept the legacy 1000 count', () => {
+  for (const batch of [false, true]) {
+    const { manifest, evidence, snapshot } = fixture(batch);
+    manifest.quantity = '100';
+    snapshot.listing.available = 100n;
+    snapshot.escrowBalance = 100n;
+    assert.throws(() => verifySnapshot(manifest, evidence, snapshot), /Mint token\/quantity mismatch/);
+    const event = iface.encodeEventLog(iface.getEvent(batch ? 'TransferBatch' : 'TransferSingle'),
+      batch ? [creator, ethers.ZeroAddress, creator, [8, 7], [2, 100]] : [creator, ethers.ZeroAddress, creator, 7, 100]);
+    Object.assign(snapshot.receipt.logs[0], event);
+    assert.equal(verifySnapshot(manifest, evidence, snapshot).available, '100');
+    snapshot.listing.available = 101n;
+    assert.throws(() => verifySnapshot(manifest, evidence, snapshot), /stock/);
+  }
+  for (const quantity of [undefined, null, '0', '0100', '99', '10000', 100]) {
+    assert.throws(() => validateManifest({ ...fixture().manifest, quantity }));
+  }
+});
 test('registered evidence accepts unchanged Studio exports and strict release envelopes', () => {
   const { manifest, evidence, snapshot } = fixture();
   const envelope = { schema: 1, repo: manifest.repo, version: manifest.version, metadataURI: manifest.metadataURI, mint: evidence };

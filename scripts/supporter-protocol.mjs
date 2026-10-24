@@ -1,4 +1,5 @@
 import '../js/vendor/ethers.umd.min.js';
+import { supporterQuantity } from './supporter-metadata.mjs';
 export const ethers = globalThis.ethers;
 export const CREATOR = 'thejollylama.eth';
 export const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
@@ -20,7 +21,9 @@ export function validateManifest(m) {
   requireThat(m?.schema === 1 && /^[\w.-]+\/[\w.-]+$/.test(m.repo || '') && typeof m.version === 'string' && m.version.length > 0, 'Invalid release identity');
   requireThat(Number.isFinite(Date.parse(m.releaseDate)) && new Date(m.releaseDate).toISOString() === m.releaseDate, 'Explicit canonical UTC releaseDate required');
   requireThat(m.creator === CREATOR && ethers.isAddress(m.creatorAddress) && m.creatorAddress !== ethers.ZeroAddress, 'Resolved creator address required');
-  requireThat(m.chainId === 8453 && m.priceUSDC === '10000000' && m.quantity === '1000', 'Expected Base $10 USDC / 1000 edition standard');
+  requireThat(m.chainId === 8453 && m.priceUSDC === '10000000', 'Expected Base $10 USDC standard');
+  requireThat(typeof m.quantity === 'string', 'Explicit supporter quantity required');
+  supporterQuantity(m.quantity);
   requireThat(/^ipfs:\/\/[^/\s]+$/.test(m.metadataURI || ''), 'Pinned prepared metadata URI required');
   for (const key of ['front', 'back', 'animation']) requireThat(/^ipfs:\/\/[^/\s]+$/.test(m[key] || ''), `Pinned ${key} required`);
   // Optional (older frozen manifests predate them): the exact-commit site pin and the ENS name it deploys to.

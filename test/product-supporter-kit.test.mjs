@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { presentationHtml, productCardUrl } from '../scripts/render-product-supporter.mjs';
+import { buildSupporterMetadata, supporterQuantity } from '../scripts/supporter-metadata.mjs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const inputsOf = yml => [...yml.split('workflow_call:')[1].split('secrets:')[0].matchAll(/^ {6}(\w+):$/gm)].map(m => m[1]);
@@ -39,6 +40,31 @@ test('presentation strips markup from the title', () => {
   const html = presentationHtml('<script>Big</script>', 'AA==', 'AA==');
   assert.doesNotMatch(html, /<script>Big/);
   assert.match(html, /scriptBig\/script Supporter DNFT/);
+});
+
+test('edition supply is explicit across workflow, card URL, metadata and both card faces', () => {
+  const identity = { repo: 'A-Decent-Agency/DBuskRadio', version: 'v0.2.0',
+    releaseDate: '2026-10-24T20:00:00.000Z', creatorAddress: `0x${'1'.repeat(40)}` };
+  for (const quantity of ['100', '1000']) {
+    const url = new URL(productCardUrl('http://localhost', { ...identity, quantity }));
+    assert.equal(url.searchParams.get('quantity'), quantity);
+    const metadata = buildSupporterMetadata({ ...identity, commit: 'a'.repeat(40),
+      release: { quantity } });
+    assert.equal(metadata.properties.supply, Number(quantity));
+    assert.equal(metadata.attributes.find(item => item.trait_type === 'supply').value, Number(quantity));
+  }
+  assert.equal(supporterQuantity(), '1000');
+  for (const bad of ['', '0', '0100', '99', '100.0', '10000', 100, null]) {
+    assert.throws(() => supporterQuantity(bad));
+    assert.throws(() => productCardUrl('http://localhost', { ...identity, quantity: bad }));
+  }
+  const card = read('supporter/product-card.html');
+  assert.equal((card.match(/class="edition"/g) || []).length, 2);
+  assert.match(card, /supporterQuantity\(params\.get\('quantity'\)/);
+  assert.doesNotMatch(card, /Edition of 1,000/);
+  const workflow = read('.github/workflows/product-supporter-prepare.yml');
+  assert.equal((workflow.match(/SUPPORTER_QUANTITY: \$\{\{ inputs\.quantity \}\}/g) || []).length, 2);
+  assert.match(read('scripts/prepare-supporter-release.mjs'), /Artwork and requested edition supply differ/);
 });
 
 test('product card fills text without HTML injection', () => {
