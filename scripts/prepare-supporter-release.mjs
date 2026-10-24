@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { buildSupporterMetadata } from './supporter-metadata.mjs';
+import { buildSupporterMetadata, supporterQuantity } from './supporter-metadata.mjs';
 import { validateManifest } from './supporter-protocol.mjs';
 import { ENS_NAME, pinSite } from './supporter-site.mjs';
 const { TAG: tag, GITHUB_REPOSITORY: repo, PINATA_JWT: jwt } = process.env;
@@ -14,6 +14,8 @@ const commit = run('git', ['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]
 if (run('git', ['rev-parse', 'HEAD']) !== commit) throw new Error('Render and prepare from the exact release tag checkout');
 const artwork = JSON.parse(readFileSync('supporter-artwork.json', 'utf8'));
 if (artwork.version !== tag || artwork.releaseDate !== process.env.RELEASE_DATE) throw new Error('Artwork release identity mismatch');
+const quantity = supporterQuantity(process.env.SUPPORTER_QUANTITY);
+if (supporterQuantity(artwork.quantity) !== quantity) throw new Error('Artwork and requested edition supply differ');
 run('git', ['archive', '--format=tar.gz', '--output=supporter-source.tar.gz', commit]);
 async function pin(file, name, type) {
   const body = new FormData();
@@ -32,11 +34,11 @@ const back = `ipfs://${await pin(readFileSync('supporter-back.png'), 'supporter-
 const animation = `ipfs://${await pin(readFileSync('supporter-presentation.html'), 'supporter-presentation.html', 'text/html')}`;
 const ensName = String(process.env.SUPPORTER_ENS_NAME || '').trim().toLowerCase();
 if (ensName && !ENS_NAME.test(ensName)) throw new Error('SUPPORTER_ENS_NAME must be a .eth name');
-// The runnable site at this exact commit; ENS is pointed at it after the mint is verified.
+// The runnable site at this exact commit; the steward may verify ENS before minting.
 const site = await pinSite({ repo, commit, jwt });
 console.log(`Pinned ${site.fileCount} site files (${site.bytes} bytes) as ${site.cid}`);
 const summary = String(existingRelease.body || '').replace(/<!--[\s\S]*?-->/g, '').replace(/[#*`>\r\n]+/g, ' ').trim().slice(0, 280);
-const manifest = { schema: 1, repo, version: tag, commit, ...artwork, chainId: 8453, quantity: '1000', codeArchiveCid, siteCid: site.cid, ...(ensName ? { ensName } : {}), front, back, animation, summary };
+const manifest = { schema: 1, repo, version: tag, commit, ...artwork, chainId: 8453, quantity, codeArchiveCid, siteCid: site.cid, ...(ensName ? { ensName } : {}), front, back, animation, summary };
 const metadata = buildSupporterMetadata({ repo, version: tag, commit, codeArchiveCid, image: front, release: manifest });
 writeFileSync('supporter-metadata.json', JSON.stringify(metadata, null, 2) + '\n');
 const metadataCid = await pin(readFileSync('supporter-metadata.json'), 'supporter-metadata.json', 'application/json');
@@ -56,13 +58,13 @@ const issueBody = `## Steward wallet checklist (no private keys in CI)\n\n` +
   `- Repository: ${repo}\n- Version: ${tag}\n- Commit: ${commit}\n` +
   `- Release date (not minted date): ${manifest.releaseDate}\n- Creator: ${manifest.creator} (${manifest.creatorAddress})\n` +
   `- Code archive CID: ${codeArchiveCid}\n- Site CID: ${site.cid} (${site.fileCount} files; preview https://ipfs.filebase.io/ipfs/${site.cid}/)\n- ENS: ${ensName || 'none (set SUPPORTER_ENS_NAME to deploy via ENS)'}\n- Front: ${metadata.image}\n- Back: ${back}\n- 3D HTML: ${animation}\n- Metadata CID: ${metadataCid}\n` +
-  `- License: Apache-2.0 + NOTICE\n- Chain: Base (8453)\n- Supply: 1000\n- Price: 10 USDC\n- Royalty: 1000 bps (10%)\n\n` +
+  `- License: Apache-2.0 + NOTICE\n- Chain: Base (8453)\n- Supply: ${quantity}\n- Price: 10 USDC\n- Royalty: 1000 bps (10%)\n\n` +
   `1. Verify all pins, archive contents, front/back, frozen manifest and metadata before signing. HTML animation support depends on the viewer (not guaranteed in MetaMask).\n` +
-  `2. DecentNFT_v0.2.registerToken(1000, "${manifest.metadataURI}", 0 /* Product */, royaltyReceiver, 1000); set your royalty recipient and record the returned tokenId. Confirm the deployed ABI.\n` +
-  `3. mintProduct: use that tokenId, quantity 1000, steward treasury recipient; confirm actual ABI and mint authority.\n` +
-  `4. DecentEscrow: approve/deposit the supporter tokens, create an active token listing for the registered contract/tokenId, quantity 1000, Base USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, priceAmount 10000000 (6 decimals), priceETH 0.\n` +
+  `2. DecentNFT_v0.2.registerToken(${quantity}, "${manifest.metadataURI}", 0 /* Product */, royaltyReceiver, 1000); set your royalty recipient and read the tokenId from the confirmed TokenRegistered receipt. Confirm the deployed ABI; never predict the next ID.\n` +
+  `3. mintProduct: use that tokenId, quantity ${quantity}, steward treasury recipient; confirm actual ABI and mint authority.\n` +
+  `4. STOP before stock transfer/listing until the steward approves primary-sale routing. The existing community escrow retains USDC; mint/royalty recipient does not reroute primary sales. Only after approval: deposit the supporter tokens and list quantity ${quantity}, Base USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, priceAmount 10000000, priceETH 0.\n` +
   `5. Record NFT/escrow addresses, tokenId, listingId, royalty recipient, and transaction hashes. Configure supporterDnft and verify the purchase route. Then run supporter-announce.yml with public evidence per https://github.com/TheJollyLaMa/DecentHead/blob/main/docs/SUPPORTER-RELEASES.md; it independently verifies chain state before Discord.\n` +
-  (ensName ? `6. Post-mint deployment: after verification the announce workflow opens "Point ${ensName} at ${tag} site" with a one-click signing link. Discord waits until ENS serves ipfs://${site.cid}.\n` : '') + `\n` +
+  (ensName ? `6. ENS: create/configure ${ensName} from its Ethereum controller and verify it serves ipfs://${site.cid}. This may be completed before minting. No Base NFT role grant to the ENS controller is needed. Discord remains gated on verified mint/listing/ENS evidence.\n` : '') + `\n` +
   `No transactions have been submitted by this workflow. Steward verifies addresses/ABIs and signs in their wallet.\n`;
 writeFileSync('supporter-mint-issue.md', issueBody);
 const issues = JSON.parse(run('gh', ['issue', 'list', '--repo', repo, '--state', 'all', '--search', `${title} in:title`, '--limit', '100', '--json', 'number,title']));

@@ -14,7 +14,10 @@ pinned to one commit.
    - freezes `supporter-release.json` on the release;
    - opens the steward issue **Mint Supporter DNFT for v0.1.0**.
    No transactions are submitted.
-2. **The steward mints and lists** in their wallet, following the issue checklist.
+2. **The steward reviews ENS, then mints** in their wallet, following the issue checklist.
+   ENS can point at the verified exact-commit site before minting. Its controller
+   need not have any Base NFT role. Listing/stock transfer requires a separately
+   approved primary-sale route; the existing community escrow retains USDC.
 3. **Register the public evidence** by running `supporter-announce.yml` with the tag and the
    `mint_evidence` JSON.
 4. **The announce workflow** runs on a schedule. It verifies the mint and listing on Base. If
@@ -30,6 +33,11 @@ pinned to one commit.
 2. Replace `DECENTHEAD_SHA` (it appears twice in each file) with one full DecentHead commit SHA from `main`.
    The `uses:` ref and `head_ref` must match.
 3. Replace `PRODUCT_NAME` and `PRODUCT_TAGLINE` with the card title and a one-line tagline.
+   Set caller input `quantity: '100'` for a 100-edition release, or retain the
+   legacy default `'1000'`. These are the supported supplies. The workflow binds
+   supply across front/back, metadata, frozen manifest and exact mint verification.
+   Price remains 10 Base USDC and royalty signal remains 1,000 bps (10%).
+   Never use a 1,000-edition frozen manifest to mint 100; publish a new version.
 4. Add repository secrets:
    - `PINATA_JWT` (required for preparation);
    - `DISCORD_SUPPORTER_WEBHOOK` (the lobby webhook; required for announcements).

@@ -39,13 +39,16 @@
     <h1 class="title" id="title"></h1>
     <div class="version" id="version"></div>
     <div class="identity" id="identity"></div>
-    <p class="back-only">Release source and runnable site archived on IPFS · Edition of 1,000<br>Apache-2.0 + NOTICE<br>Support the work. No product ownership or financial return promised.<br>Royalties are not universally enforced.</p>
+    <p class="back-only">Release source and runnable site archived on IPFS · <span class="edition"></span><br>Apache-2.0 + NOTICE<br>Support the work. No product ownership or financial return promised.<br>Royalties are not universally enforced.</p>
     <p class="tagline" id="tagline"></p>
-    <div class="chips"><span>Edition of 1,000</span><span>Base · $10 USDC</span><span>Apache-2.0 + NOTICE</span></div>
+    <div class="chips"><span class="edition"></span><span>Base · $10 USDC</span><span>Apache-2.0 + NOTICE</span></div>
     <div class="foot" id="foot"></div>
   </div>
-  <script>
+  <script type="module">
+    import { supporterQuantity } from '../scripts/supporter-metadata.mjs';
     const params = new URLSearchParams(location.search);
+    const quantity = supporterQuantity(params.get('quantity') ?? undefined);
+    document.querySelectorAll('.edition').forEach(element => { element.textContent = `Edition of ${Number(quantity).toLocaleString('en-US')}`; });
     const repo = params.get('repo') || '', address = params.get('creatorAddress') || '';
     if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('repo and resolved creatorAddress required');
     const text = (id, value) => { document.getElementById(id).textContent = value; };
