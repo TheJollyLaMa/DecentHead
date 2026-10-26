@@ -36,7 +36,13 @@ pinned to one commit.
    Set caller input `quantity: '100'` for a 100-edition release, or retain the
    legacy default `'1000'`. These are the supported supplies. The workflow binds
    supply across front/back, metadata, frozen manifest and exact mint verification.
-   Price remains 10 Base USDC and royalty signal remains 1,000 bps (10%).
+   Set `price_usdc: '100000000'` for 100 Base USDC, or retain the legacy
+   `'10000000'` default for 10 USDC. These exact six-decimal amounts are the
+   supported prices; artwork, metadata, mint instructions, listing verification
+   and Discord use the frozen manifest price. Royalty signal remains 1,000 bps (10%).
+   A 100-USDC purchase route includes `priceUSDC=100000000`; old three-parameter
+   links remain 10 USDC. Deploy compatible checkout and mint-studio consumers
+   before publishing a release that uses the new price.
    Never use a 1,000-edition frozen manifest to mint 100; publish a new version.
 4. Add repository secrets:
    - `PINATA_JWT` (required for preparation);

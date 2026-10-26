@@ -19,3 +19,15 @@ test('purchase route rejects unavailable or incorrectly priced listings', () => 
   assert.throws(() => validateSupporterPurchase(listing, 0n, false));
   assert.throws(() => validateSupporterPurchase(listing, 1n, true));
 });
+test('100-USDC link explicitly selects its price and cannot buy a different-price listing', () => {
+  const query = `?chainId=8453&escrow=${BASE_SUPPORTER.escrow}&listingId=5`;
+  assert.equal(parseSupporterPurchase(query).priceUSDC, '10000000');
+  const selection = parseSupporterPurchase(`${query}&priceUSDC=100000000`);
+  assert.equal(selection.priceUSDC, '100000000');
+  const listing = { nftContract: BASE_SUPPORTER.nft, priceToken: BASE_SUPPORTER.usdc,
+    priceETH: 0n, priceAmount: 100000000n, available: 100n, active: true };
+  validateSupporterPurchase(listing, 100n, false, selection.priceUSDC);
+  assert.throws(() => validateSupporterPurchase(listing, 100n, false));
+  assert.throws(() => validateSupporterPurchase({ ...listing, priceAmount: 10000000n }, 100n, false, selection.priceUSDC));
+  assert.throws(() => parseSupporterPurchase(`${query}&priceUSDC=100000001`));
+});

@@ -4,14 +4,14 @@
 import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CREATOR, ethers } from './supporter-protocol.mjs';
-import { supporterQuantity } from './supporter-metadata.mjs';
+import { supporterQuantity, supporterPrice } from './supporter-metadata.mjs';
 
-export function productCardUrl(base, { repo, name, version, releaseDate, creatorAddress, tagline, quantity }) {
+export function productCardUrl(base, { repo, name, version, releaseDate, creatorAddress, tagline, quantity, priceUSDC }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '')) throw new Error('owner/repo required');
   if (!version || !/^[\w./-]{1,64}$/.test(version)) throw new Error('Release version required');
   if (!Number.isFinite(Date.parse(releaseDate)) || new Date(releaseDate).toISOString() !== releaseDate) throw new Error('Canonical UTC releaseDate required');
   if (!ethers.isAddress(creatorAddress || '')) throw new Error('Resolved creator address required');
-  const params = new URLSearchParams({ repo, version, releaseDate, creatorAddress, quantity: supporterQuantity(quantity), name: String(name || repo.split('/')[1]).slice(0, 40), tagline: String(tagline || '').slice(0, 160) });
+  const params = new URLSearchParams({ repo, version, releaseDate, creatorAddress, quantity: supporterQuantity(quantity), priceUSDC: supporterPrice(priceUSDC), name: String(name || repo.split('/')[1]).slice(0, 40), tagline: String(tagline || '').slice(0, 160) });
   return `${base.replace(/\/$/, '')}/supporter/product-card.html?${params}`;
 }
 
@@ -30,6 +30,7 @@ async function main() {
   const { RELEASE_DATE: releaseDate, ENS_RPC_URL: rpcUrl, GITHUB_REPOSITORY: repo, PRODUCT_NAME: name, TAGLINE: tagline } = process.env;
   const version = process.argv[2];
   const quantity = supporterQuantity(process.env.SUPPORTER_QUANTITY);
+  const priceUSDC = supporterPrice(process.env.SUPPORTER_PRICE_USDC);
   if (!rpcUrl || new URL(rpcUrl).protocol !== 'https:') throw new Error('Public HTTPS mainnet ENS_RPC_URL required');
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   let creatorAddress, ensBlock;
@@ -39,7 +40,7 @@ async function main() {
     if (!creatorAddress || creatorAddress === ethers.ZeroAddress) throw new Error('Creator ENS is unresolved; no fallback');
     ensBlock = await provider.getBlockNumber();
   } finally { provider.destroy(); }
-  const cardUrl = productCardUrl(process.env.BASE_URL || 'http://127.0.0.1:8790', { repo, name, version, releaseDate, creatorAddress, tagline, quantity });
+  const cardUrl = productCardUrl(process.env.BASE_URL || 'http://127.0.0.1:8790', { repo, name, version, releaseDate, creatorAddress, tagline, quantity, priceUSDC });
   const browser = await chromium.launch();
   try {
     const site = await browser.newPage({ viewport: { width: 1440, height: 810 }, deviceScaleFactor: 1 });
@@ -62,7 +63,7 @@ async function main() {
   } finally { await browser.close(); }
   const front = readFileSync('supporter-front.png').toString('base64'), back = readFileSync('supporter-back.png').toString('base64');
   writeFileSync('supporter-presentation.html', presentationHtml(name || repo.split('/')[1], front, back));
-  writeFileSync('supporter-artwork.json', JSON.stringify({ version, releaseDate, creator: CREATOR, creatorAddress, ensChainId: 1, ensObservedBlock: ensBlock, priceUSDC: '10000000', quantity }, null, 2) + '\n');
+  writeFileSync('supporter-artwork.json', JSON.stringify({ version, releaseDate, creator: CREATOR, creatorAddress, ensChainId: 1, ensObservedBlock: ensBlock, priceUSDC, quantity }, null, 2) + '\n');
   console.log(`Rendered ${repo} ${version}: tagged-site front, provenance back, presentation and creator provenance.`);
 }
 
