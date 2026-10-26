@@ -56,8 +56,8 @@ export class AboutModal extends HTMLElement {
           listing.priceToken.toLowerCase() !== cfg.paymentToken.toLowerCase())) {
         throw new Error('Listing price changed. Reload and review the listing before purchasing.');
       }
-      const price = cfg.expectedPriceAmount === '10000000' && cfg.paymentToken?.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
-        ? '10 USDC' : listing.priceETH > 0n ? `${ethers.formatEther(listing.priceETH)} ETH` : `${listing.priceAmount} raw token units (${listing.priceToken === ZERO ? cfg.paymentToken : listing.priceToken})`;
+      const price = ['10000000', '100000000'].includes(cfg.expectedPriceAmount) && cfg.paymentToken?.toLowerCase() === '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913'
+        ? `${BigInt(cfg.expectedPriceAmount) / 1000000n} USDC` : listing.priceETH > 0n ? `${ethers.formatEther(listing.priceETH)} ETH` : `${listing.priceAmount} raw token units (${listing.priceToken === ZERO ? cfg.paymentToken : listing.priceToken})`;
       if (!confirm(`Buy one supporter DNFT for ${price}? Review the wallet transaction before signing.`)) { this.status('Cancelled.'); return; }
       let tx;
       if (listing.priceETH > 0n) {

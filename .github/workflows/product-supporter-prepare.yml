@@ -33,6 +33,11 @@ on:
         required: false
         type: string
         default: '1000'
+      price_usdc:
+        description: Price in USDC six-decimal base units, 10000000 or 100000000
+        required: false
+        type: string
+        default: '10000000'
       ens_name:
         description: ENS name to point at the release site after mint (pass vars.SUPPORTER_ENS_NAME)
         required: false
@@ -83,6 +88,7 @@ jobs:
           PRODUCT_NAME: ${{ inputs.product_name }}
           TAGLINE: ${{ inputs.tagline }}
           SUPPORTER_QUANTITY: ${{ inputs.quantity }}
+          SUPPORTER_PRICE_USDC: ${{ inputs.price_usdc }}
           BASE_URL: http://127.0.0.1:8790
           PRODUCT_URL: http://127.0.0.1:8791/
           GH_TOKEN: ${{ github.token }}
@@ -110,6 +116,7 @@ jobs:
           PINATA_JWT: ${{ secrets.PINATA_JWT }}
           SUPPORTER_ENS_NAME: ${{ inputs.ens_name }}
           SUPPORTER_QUANTITY: ${{ inputs.quantity }}
+          SUPPORTER_PRICE_USDC: ${{ inputs.price_usdc }}
           GH_TOKEN: ${{ github.token }}
         run: node ../head/scripts/prepare-supporter-release.mjs
       - uses: actions/upload-artifact@v4

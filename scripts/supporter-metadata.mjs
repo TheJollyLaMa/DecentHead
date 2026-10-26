@@ -2,12 +2,19 @@ export function supporterQuantity(value = '1000') {
   if (!['100', '1000'].includes(value)) throw new Error('Supporter quantity must be 100 or 1000');
   return value;
 }
+export function supporterPrice(value = '10000000') {
+  if (!['10000000', '100000000'].includes(value)) throw new Error('Supporter price must be 10 or 100 USDC in six-decimal base units');
+  return value;
+}
+export function supporterPriceLabel(value) {
+  return `${BigInt(supporterPrice(value)) / 1000000n} USDC`;
+}
 
 export function buildSupporterMetadata({ repo, version, commit, codeArchiveCid = null, image, externalUrl, release }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '')) throw new Error('Expected owner/repo');
   if (!version || !/^[a-f0-9]{40}$/i.test(commit || '')) throw new Error('Version and full commit SHA required');
   const properties = { repo, version, commit, code_archive_cid: codeArchiveCid,
-    license: 'Apache-2.0 + NOTICE', supply: Number(supporterQuantity(release?.quantity)), price: '10 USDC', chain: 'Base', royalty_bps: 1000 };
+    license: 'Apache-2.0 + NOTICE', supply: Number(supporterQuantity(release?.quantity)), price: supporterPriceLabel(release?.priceUSDC), chain: 'Base', royalty_bps: 1000 };
   if (release) Object.assign(properties, {
     release_date: release.releaseDate, creator: release.creator, creator_address: release.creatorAddress,
     back_image: release.back, presentation: 'Self-contained rotatable front/back HTML',

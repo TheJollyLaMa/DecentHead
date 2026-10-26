@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { presentationHtml, productCardUrl } from '../scripts/render-product-supporter.mjs';
-import { buildSupporterMetadata, supporterQuantity } from '../scripts/supporter-metadata.mjs';
+import { buildSupporterMetadata, supporterQuantity, supporterPrice, supporterPriceLabel } from '../scripts/supporter-metadata.mjs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
 const inputsOf = yml => [...yml.split('workflow_call:')[1].split('secrets:')[0].matchAll(/^ {6}(\w+):$/gm)].map(m => m[1]);
@@ -40,6 +40,26 @@ test('presentation strips markup from the title', () => {
   const html = presentationHtml('<script>Big</script>', 'AA==', 'AA==');
   assert.doesNotMatch(html, /<script>Big/);
   assert.match(html, /scriptBig\/script Supporter DNFT/);
+});
+test('approved prices bind card, workflow, artwork and metadata without changing legacy defaults', () => {
+  const identity = { repo: 'TheJollyLaMa/DecentBusking', version: 'v1.0.0',
+    releaseDate: '2026-10-25T20:00:00.000Z', creatorAddress: `0x${'1'.repeat(40)}` };
+  assert.equal(supporterPrice(), '10000000');
+  for (const priceUSDC of ['10000000', '100000000']) {
+    const url = new URL(productCardUrl('http://localhost', { ...identity, quantity: '100', priceUSDC }));
+    assert.equal(url.searchParams.get('priceUSDC'), priceUSDC);
+    const metadata = buildSupporterMetadata({ ...identity, commit: 'a'.repeat(40), release: { quantity: '100', priceUSDC } });
+    assert.equal(metadata.properties.price, supporterPriceLabel(priceUSDC));
+    assert.equal(metadata.attributes.find(item => item.trait_type === 'price').value, supporterPriceLabel(priceUSDC));
+  }
+  for (const price of [null, '', '10', '100', 100000000, '0100000000', '100000000.0', '-100000000', '100000001']) {
+    assert.throws(() => supporterPrice(price));
+    assert.throws(() => productCardUrl('http://localhost', { ...identity, priceUSDC: price }));
+  }
+  const workflow = read('.github/workflows/product-supporter-prepare.yml');
+  assert.equal((workflow.match(/SUPPORTER_PRICE_USDC: \$\{\{ inputs\.price_usdc \}\}/g) || []).length, 2);
+  assert.match(read('scripts/prepare-supporter-release.mjs'), /Artwork and requested edition price differ/);
+  assert.doesNotMatch(read('supporter/product-card.html'), /\$10 USDC/);
 });
 
 test('edition supply is explicit across workflow, card URL, metadata and both card faces', () => {

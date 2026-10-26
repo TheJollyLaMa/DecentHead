@@ -41,11 +41,11 @@
     <div class="identity" id="identity"></div>
     <p class="back-only">Release source and runnable site archived on IPFS · <span class="edition"></span><br>Apache-2.0 + NOTICE<br>Support the work. No product ownership or financial return promised.<br>Royalties are not universally enforced.</p>
     <p class="tagline" id="tagline"></p>
-    <div class="chips"><span class="edition"></span><span>Base · $10 USDC</span><span>Apache-2.0 + NOTICE</span></div>
+    <div class="chips"><span class="edition"></span><span id="price"></span><span>Apache-2.0 + NOTICE</span></div>
     <div class="foot" id="foot"></div>
   </div>
   <script type="module">
-    import { supporterQuantity } from '../scripts/supporter-metadata.mjs';
+    import { supporterQuantity, supporterPriceLabel } from '../scripts/supporter-metadata.mjs';
     const params = new URLSearchParams(location.search);
     const quantity = supporterQuantity(params.get('quantity') ?? undefined);
     document.querySelectorAll('.edition').forEach(element => { element.textContent = `Edition of ${Number(quantity).toLocaleString('en-US')}`; });
@@ -53,7 +53,9 @@
     if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !/^0x[a-fA-F0-9]{40}$/.test(address)) throw new Error('repo and resolved creatorAddress required');
     const text = (id, value) => { document.getElementById(id).textContent = value; };
     text('title', (params.get('name') || repo.split('/')[1]).slice(0, 40));
-    text('version', `${params.get('version')} · $10 USDC`);
+    const price = supporterPriceLabel(params.get('priceUSDC') ?? undefined);
+    text('version', `${params.get('version')} · ${price}`);
+    text('price', `Base · ${price}`);
     text('identity', `thejollylama.eth · ${address} · Release ${params.get('releaseDate')?.slice(0, 10)}`);
     text('tagline', (params.get('tagline') || '').slice(0, 160));
     text('foot', `A Decent Agency · github.com/${repo}`);
