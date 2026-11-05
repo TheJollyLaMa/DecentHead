@@ -9,7 +9,7 @@ let provider;
 try {
   const selection = parseSupporterPurchase(location.search);
   const ethers = await loadEthers();
-  provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+  provider = new ethers.JsonRpcProvider('https://base-rpc.publicnode.com', undefined, { staticNetwork: true });
   if ((await provider.getNetwork()).chainId !== BigInt(selection.chainId)) throw new Error('Listing RPC is not on Base.');
   const escrow = new ethers.Contract(selection.escrow, SUPPORTER_ESCROW_ABI, provider);
   const { listing, listingId } = await resolveSupporterListing(escrow, selection.listingId);

@@ -32,6 +32,8 @@ fetched from a CDN. ethers 6.16.0 is loaded locally only when needed.
 The optional purchase route additionally needs `supporter/buy.html`,
 `supporter/buy.js`, and `js/supporter-purchase.js` at the same relative paths.
 The Base purchase route verifies price and custody before opening a wallet.
+Its read-only PublicNode provider verifies the network once, avoiding repeated
+chain-ID requests while resolving historical listing links.
 It checks the reviewed price in the link (10 USDC by default); the 100 USDC
 Busking edition links must include `priceUSDC=100000000`.
 Retired listing links resolve only a unique active replacement with the same
