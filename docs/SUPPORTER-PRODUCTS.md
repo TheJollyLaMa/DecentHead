@@ -70,6 +70,11 @@ It cannot replace the preview origin or supply a fragment. Review the rendered
 front before signing: a successful render does not prove that onboarding or
 other overlays are absent.
 
+Card typography regression check:
+`node test/product-supporter-card.browser.mjs` (Playwright/Chromium required;
+`PLAYWRIGHT_MODULE` may select an existing installation). Both faces must keep
+long project names on one line and all text inside the card.
+
 ## Updating the kit
 
 Bump `DECENTHEAD_SHA` in both caller files together. Existing frozen releases are never re-prepared:

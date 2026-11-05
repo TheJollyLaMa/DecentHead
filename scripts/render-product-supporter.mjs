@@ -67,7 +67,7 @@ async function main() {
     copyFileSync('supporter-preview.png', fileURLToPath(new URL('../supporter/product-preview.png', import.meta.url)));
     const page = await browser.newPage({ viewport: { width: 1200, height: 1200 }, deviceScaleFactor: 1 });
     await page.goto(cardUrl, { waitUntil: 'load' });
-    await page.waitForFunction(() => document.getElementById('title').textContent && document.getElementById('preview').complete);
+    await page.waitForFunction(() => document.body.dataset.cardReady === 'true' && document.getElementById('preview').complete);
     await page.evaluate(() => document.fonts.ready);
     await page.screenshot({ path: 'supporter-front.png' });
     await page.locator('body').evaluate(body => body.classList.add('back'));
