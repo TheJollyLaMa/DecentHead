@@ -27,6 +27,7 @@ on:
         required: true
 permissions:
   contents: write
+  issues: write
 concurrency:
   group: supporter-${{ github.repository }}
   cancel-in-progress: false
@@ -55,5 +56,6 @@ jobs:
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
           SCAN_RELEASES: ${{ inputs.tag == '' && github.event.release.tag_name == '' && 'true' || 'false' }}
           DISCORD_SUPPORTER_WEBHOOK: ${{ secrets.DISCORD_SUPPORTER_WEBHOOK }}
+          SUPPORTER_ENS_RPC_URL: ${{ vars.SUPPORTER_ENS_RPC_URL }}
           GH_TOKEN: ${{ github.token }}
         run: node scripts/announce-supporter-release.mjs

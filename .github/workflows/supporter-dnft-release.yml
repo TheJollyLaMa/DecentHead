@@ -60,6 +60,7 @@ jobs:
           TAG: ${{ inputs.tag || github.event.release.tag_name }}
           RELEASE_DATE: ${{ inputs.release_date || github.event.release.published_at }}
           PINATA_JWT: ${{ secrets.PINATA_JWT }}
+          SUPPORTER_ENS_NAME: ${{ vars.SUPPORTER_ENS_NAME }}
           GH_TOKEN: ${{ github.token }}
         run: |
           export RELEASE_DATE="$(node -e 'process.stdout.write(new Date(process.env.RELEASE_DATE).toISOString())')"

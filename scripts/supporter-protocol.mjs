@@ -1,4 +1,5 @@
 import '../js/vendor/ethers.umd.min.js';
+import { supporterQuantity, supporterPrice, supporterPriceLabel } from './supporter-metadata.mjs';
 export const ethers = globalThis.ethers;
 export const CREATOR = 'thejollylama.eth';
 export const USDC = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
@@ -20,9 +21,15 @@ export function validateManifest(m) {
   requireThat(m?.schema === 1 && /^[\w.-]+\/[\w.-]+$/.test(m.repo || '') && typeof m.version === 'string' && m.version.length > 0, 'Invalid release identity');
   requireThat(Number.isFinite(Date.parse(m.releaseDate)) && new Date(m.releaseDate).toISOString() === m.releaseDate, 'Explicit canonical UTC releaseDate required');
   requireThat(m.creator === CREATOR && ethers.isAddress(m.creatorAddress) && m.creatorAddress !== ethers.ZeroAddress, 'Resolved creator address required');
-  requireThat(m.chainId === 8453 && m.priceUSDC === '10000000' && m.quantity === '1000', 'Expected Base $10 USDC / 1000 edition standard');
+  requireThat(m.chainId === 8453 && typeof m.priceUSDC === 'string', 'Explicit Base USDC price required');
+  supporterPrice(m.priceUSDC);
+  requireThat(typeof m.quantity === 'string', 'Explicit supporter quantity required');
+  supporterQuantity(m.quantity);
   requireThat(/^ipfs:\/\/[^/\s]+$/.test(m.metadataURI || ''), 'Pinned prepared metadata URI required');
   for (const key of ['front', 'back', 'animation']) requireThat(/^ipfs:\/\/[^/\s]+$/.test(m[key] || ''), `Pinned ${key} required`);
+  // Optional (older frozen manifests predate them): the exact-commit site pin and the ENS name it deploys to.
+  requireThat(m.siteCid === undefined || /^b[a-z2-7]{20,}$/.test(m.siteCid), 'siteCid must be a CIDv1 folder');
+  requireThat(m.ensName === undefined || (m.siteCid && /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+eth$/.test(m.ensName)), 'ensName must be a .eth name with a siteCid');
   return m;
 }
 export function validateEvidence(e) {
@@ -42,6 +49,8 @@ export function validateEvidence(e) {
 }
 export function verifySnapshot(m, e, s) {
   validateManifest(m); validateEvidence(e);
+  const routePrice = new URL(e.purchaseUrl).searchParams.get('priceUSDC') ?? '10000000';
+  requireThat(routePrice === m.priceUSDC, 'Purchase URL must identify the frozen USDC price');
   requireThat(Number(s.chainId) === 8453, 'RPC chain mismatch');
   const r = s.receipt;
   requireThat(r && Number(r.status) === 1 && equal(r.hash, e.mintTxHash), 'Missing, malformed or failed mint receipt');
@@ -67,7 +76,7 @@ export function verifySnapshot(m, e, s) {
   const l = s.listing;
   requireThat(l && equal(l.nftContract, e.nftContract) && BigInt(l.tokenId) === BigInt(e.tokenId), 'Listing token mismatch');
   requireThat(l.active === true && s.paused === false && BigInt(l.available) > 0n && BigInt(l.available) <= quantity, 'Listing inactive, paused or out of stock');
-  requireThat(equal(l.priceToken, USDC) && BigInt(l.priceAmount) === 10000000n && BigInt(l.priceETH) === 0n, 'Listing must offer only $10 Base USDC');
+  requireThat(equal(l.priceToken, USDC) && BigInt(l.priceAmount) === BigInt(m.priceUSDC) && BigInt(l.priceETH) === 0n, 'Listing must match the frozen Base USDC price');
   requireThat(BigInt(s.escrowBalance) >= BigInt(l.available), 'Escrow stock insufficient');
   return { ...e, verifiedBlock: s.blockNumber, available: String(l.available) };
 }
@@ -131,10 +140,10 @@ export function buildDiscordPayload(m, verified) {
   const clean = value => String(value).replace(/[@`*_~<>]/g, '').slice(0, 160);
   return {
     username: 'Decent DNFT Bot', allowed_mentions: { parse: [] },
-    content: `${clean(m.repo)} ${clean(m.version)} Supporter DNFT is minted and listed: $10 USDC on Base. Support the new version and collect a dated artifact of Decent history; no financial return guaranteed. Royalties are not universal.`,
+    content: `${clean(m.repo)} ${clean(m.version)} Supporter DNFT is minted and listed: ${supporterPriceLabel(m.priceUSDC)} on Base. Support the new version and collect a dated artifact of Decent history; no financial return guaranteed. Royalties are not universal.`,
     embeds: [{
       title: `${clean(m.version)} · Supporter DNFT`, url: verified.purchaseUrl,
-      description: `${clean(m.summary || 'A new Decent release: support our ongoing development and keep a dated artifact of the work.')}\n\nCreator: ${CREATOR}\nRelease date: ${m.releaseDate.slice(0, 10)}\n[Purchase](${verified.purchaseUrl}) · [Release notes](https://github.com/${m.repo}/releases/tag/${encodeURIComponent(m.version)})\nCollect, keep or resell where supported; resale value is not guaranteed.`,
+      description: `${clean(m.summary || 'A new Decent release: support our ongoing development and keep a dated artifact of the work.')}\n\nCreator: ${CREATOR}\nRelease date: ${m.releaseDate.slice(0, 10)}${m.ensName ? `\nLive on IPFS: https://${clean(m.ensName)}.limo` : ''}\n[Purchase](${verified.purchaseUrl}) · [Release notes](https://github.com/${m.repo}/releases/tag/${encodeURIComponent(m.version)})\nCollect, keep or resell where supported; resale value is not guaranteed.`,
       image: { url: `https://gateway.pinata.cloud/ipfs/${m.front.slice(7)}` },
     }],
   };
