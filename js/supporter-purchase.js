@@ -8,7 +8,25 @@ export const SUPPORTER_ESCROW_ABI = [
   'function getListing(uint256) view returns (tuple(address nftContract,uint256 tokenId,uint256 priceETH,address priceToken,uint256 priceAmount,uint256 available,bool active,string note))',
   'function getNFTBalance(address,uint256) view returns (uint256)',
   'function paused() view returns (bool)',
+  'function nextListingId() view returns (uint256)',
 ];
+export async function resolveSupporterListing(escrow, listingId) {
+  const original = await escrow.getListing(listingId);
+  if (original.active) return { listing: original, listingId };
+  const count = await escrow.nextListingId();
+  if (count > 1000n) throw new Error('Listing history is too large to resolve automatically.');
+  const matches = [];
+  for (let id = BigInt(listingId) + 1n; id < count; id++) {
+    const listing = await escrow.getListing(id);
+    if (listing.active && listing.nftContract.toLowerCase() === original.nftContract.toLowerCase() &&
+        listing.tokenId === original.tokenId && listing.priceToken.toLowerCase() === original.priceToken.toLowerCase() &&
+        listing.priceAmount === original.priceAmount && listing.priceETH === original.priceETH) {
+      matches.push({ listing, listingId: String(id) });
+    }
+  }
+  if (matches.length !== 1) throw new Error('Original listing is inactive; no unique same-price replacement is available.');
+  return matches[0];
+}
 export function parseSupporterPurchase(search) {
   const params = new URLSearchParams(search);
   if (params.get('chainId') !== String(BASE_SUPPORTER.chainId) ||
@@ -25,7 +43,7 @@ export function validateSupporterPurchase(listing, stock, paused) {
   if (!listing.active || listing.available < 1n || stock < 1n) throw new Error('This Supporter listing is not available.');
   if (listing.nftContract.toLowerCase() !== BASE_SUPPORTER.nft.toLowerCase() ||
       listing.priceToken.toLowerCase() !== BASE_SUPPORTER.usdc.toLowerCase() ||
-      listing.priceETH !== 0n || listing.priceAmount !== 10000000n) {
-    throw new Error('This listing is not an approved $10 USDC Supporter edition.');
+      listing.priceETH !== 0n || listing.priceAmount !== (listing.tokenId === 75n ? 100000000n : 10000000n)) {
+    throw new Error('This listing is not an approved fixed-price USDC Supporter edition.');
   }
 }

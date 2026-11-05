@@ -31,6 +31,11 @@ adapter itself imports modules). No CSS, fonts, wallet scripts, or assets are
 fetched from a CDN. ethers 6.16.0 is loaded locally only when needed.
 The optional purchase route additionally needs `supporter/buy.html`,
 `supporter/buy.js`, and `js/supporter-purchase.js` at the same relative paths.
+The Base purchase route verifies price and custody before opening a wallet.
+It accepts 10 USDC editions and the 100 USDC Busking edition (token 75).
+Retired listing links resolve only a unique active replacement with the same
+collection, token and payment price; the page identifies the replacement
+explicitly. Frozen release metadata need not be rewritten after a stock reserve.
 
 ## Ankh menu skeletons
 
