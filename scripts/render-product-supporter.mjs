@@ -6,6 +6,16 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { CREATOR, ethers } from './supporter-protocol.mjs';
 import { supporterQuantity, supporterPrice } from './supporter-metadata.mjs';
 
+export function productPreviewUrl(base, query = '') {
+  const url = new URL(base);
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) throw new Error('HTTP product preview required');
+  if (typeof query !== 'string' || query.length > 1024 || (query !== '' && !/^\?[^\s#\u0000-\u001f]+$/.test(query))) {
+    throw new Error('Preview query must be empty or a query string without fragments or whitespace');
+  }
+  if (query) url.search = query;
+  return url.href;
+}
+
 export function productCardUrl(base, { repo, name, version, releaseDate, creatorAddress, tagline, quantity, priceUSDC }) {
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '')) throw new Error('owner/repo required');
   if (!version || !/^[\w./-]{1,64}$/.test(version)) throw new Error('Release version required');
@@ -31,6 +41,8 @@ async function main() {
   const version = process.argv[2];
   const quantity = supporterQuantity(process.env.SUPPORTER_QUANTITY);
   const priceUSDC = supporterPrice(process.env.SUPPORTER_PRICE_USDC);
+  const previewQuery = process.env.PRODUCT_QUERY || '';
+  const previewUrl = productPreviewUrl(process.env.PRODUCT_URL || 'http://127.0.0.1:8791/', previewQuery);
   if (!rpcUrl || new URL(rpcUrl).protocol !== 'https:') throw new Error('Public HTTPS mainnet ENS_RPC_URL required');
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   let creatorAddress, ensBlock;
@@ -48,7 +60,7 @@ async function main() {
     site.on('pageerror', error => errors.push(error.message));
     await site.emulateMedia({ reducedMotion: 'reduce' });
     // Live dapps keep sockets and animations open, so wait for load plus a settle period rather than network idle.
-    await site.goto(process.env.PRODUCT_URL || 'http://127.0.0.1:8791/', { waitUntil: 'load', timeout: 60000 });
+    await site.goto(previewUrl, { waitUntil: 'load', timeout: 60000 });
     await site.waitForTimeout(Number(process.env.SETTLE_MS || 5000));
     await site.screenshot({ path: 'supporter-preview.png' });
     if (errors.length) console.warn(`Product page reported ${errors.length} script error(s) while rendering; review supporter-preview.png before minting.`);
@@ -63,7 +75,7 @@ async function main() {
   } finally { await browser.close(); }
   const front = readFileSync('supporter-front.png').toString('base64'), back = readFileSync('supporter-back.png').toString('base64');
   writeFileSync('supporter-presentation.html', presentationHtml(name || repo.split('/')[1], front, back));
-  writeFileSync('supporter-artwork.json', JSON.stringify({ version, releaseDate, creator: CREATOR, creatorAddress, ensChainId: 1, ensObservedBlock: ensBlock, priceUSDC, quantity }, null, 2) + '\n');
+  writeFileSync('supporter-artwork.json', JSON.stringify({ version, releaseDate, creator: CREATOR, creatorAddress, ensChainId: 1, ensObservedBlock: ensBlock, priceUSDC, quantity, ...(previewQuery ? { previewQuery } : {}) }, null, 2) + '\n');
   console.log(`Rendered ${repo} ${version}: tagged-site front, provenance back, presentation and creator provenance.`);
 }
 

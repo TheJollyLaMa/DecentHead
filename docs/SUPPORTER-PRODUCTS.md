@@ -63,6 +63,13 @@ Non-root selections are recorded as `siteRoot` in the frozen manifest.
 Paths must be relative, without hidden or parent segments. This does not run a
 build or support a server-only application.
 
+If the app needs an explicit public view for its screenshot, set
+`preview_query: '?canopy=agency'` (for example). The query changes only the
+local screenshot URL, never the served directory, pin or source archive.
+It cannot replace the preview origin or supply a fragment. Review the rendered
+front before signing: a successful render does not prove that onboarding or
+other overlays are absent.
+
 ## Updating the kit
 
 Bump `DECENTHEAD_SHA` in both caller files together. Existing frozen releases are never re-prepared:

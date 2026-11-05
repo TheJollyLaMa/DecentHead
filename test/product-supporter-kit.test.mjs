@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { presentationHtml, productCardUrl } from '../scripts/render-product-supporter.mjs';
+import { presentationHtml, productCardUrl, productPreviewUrl } from '../scripts/render-product-supporter.mjs';
 import { buildSupporterMetadata, supporterQuantity, supporterPrice, supporterPriceLabel } from '../scripts/supporter-metadata.mjs';
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
@@ -103,4 +103,20 @@ test('workflow renders and pins the same validated static root', () => {
   const prepare = read('scripts/prepare-supporter-release.mjs');
   assert.match(prepare, /validateSiteRoot\(process\.env\.SUPPORTER_SITE_ROOT\)/);
   assert.match(prepare, /pinSite\(\{ repo, commit, jwt, siteRoot \}\)/);
+});
+
+test('public-view screenshot queries cannot replace the preview origin or path', () => {
+  const base = 'http://127.0.0.1:8791/';
+  assert.equal(productPreviewUrl(base), base);
+  assert.equal(productPreviewUrl(base, '?canopy=agency'), `${base}?canopy=agency`);
+  assert.equal(productPreviewUrl(`${base}app/?old=1`, '?canopy=agency'), `${base}app/?canopy=agency`);
+  for (const query of ['https://evil.test', '//evil.test', '?x=1#fragment', '?x=hello world',
+    '?x=1\n', '?', null, '?x=' + 'a'.repeat(1024)]) {
+    assert.throws(() => productPreviewUrl(base, query), /Preview query/);
+  }
+  assert.throws(() => productPreviewUrl('file:///tmp/index.html'), /HTTP/);
+  assert.throws(() => productPreviewUrl('https://user:pass@example.org/'), /HTTP/);
+  const workflow = read('.github/workflows/product-supporter-prepare.yml');
+  assert.ok(inputsOf(workflow).includes('preview_query'));
+  assert.match(workflow, /PRODUCT_QUERY: \$\{\{ inputs\.preview_query \}\}/);
 });
