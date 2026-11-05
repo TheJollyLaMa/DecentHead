@@ -28,6 +28,11 @@ on:
         required: false
         type: string
         default: ''
+      site_root:
+        description: Static site directory in the tagged repo (must contain index.html)
+        required: false
+        type: string
+        default: '.'
       quantity:
         description: Edition supply, 100 or 1000 (legacy default)
         required: false
@@ -79,6 +84,13 @@ jobs:
       - name: Provision renderer
         working-directory: head
         run: npm ci && npx playwright install --with-deps chromium
+      - name: Validate tagged static site root
+        working-directory: product
+        env:
+          SUPPORTER_SITE_ROOT: ${{ inputs.site_root }}
+        run: |
+          node --input-type=module -e 'import { validateSiteRoot } from "../head/scripts/supporter-site.mjs"; validateSiteRoot(process.env.SUPPORTER_SITE_ROOT)'
+          test -f "$SUPPORTER_SITE_ROOT/index.html" || { echo "::error::Static site root has no index.html"; exit 1; }
       - name: Render card from the tagged product site
         working-directory: product
         env:
@@ -89,6 +101,7 @@ jobs:
           TAGLINE: ${{ inputs.tagline }}
           SUPPORTER_QUANTITY: ${{ inputs.quantity }}
           SUPPORTER_PRICE_USDC: ${{ inputs.price_usdc }}
+          SUPPORTER_SITE_ROOT: ${{ inputs.site_root }}
           BASE_URL: http://127.0.0.1:8790
           PRODUCT_URL: http://127.0.0.1:8791/
           GH_TOKEN: ${{ github.token }}
@@ -100,7 +113,7 @@ jobs:
           echo "RELEASE_DATE=$RELEASE_DATE" >> "$GITHUB_ENV"
           python3 -m http.server 8790 --bind 127.0.0.1 --directory ../head > ../head-server.log 2>&1 &
           head_pid=$!
-          python3 -m http.server 8791 --bind 127.0.0.1 --directory . > ../product-server.log 2>&1 &
+          python3 -m http.server 8791 --bind 127.0.0.1 --directory "$SUPPORTER_SITE_ROOT" > ../product-server.log 2>&1 &
           product_pid=$!
           trap 'kill "$head_pid" "$product_pid"' EXIT
           for attempt in $(seq 1 20); do
@@ -117,6 +130,7 @@ jobs:
           SUPPORTER_ENS_NAME: ${{ inputs.ens_name }}
           SUPPORTER_QUANTITY: ${{ inputs.quantity }}
           SUPPORTER_PRICE_USDC: ${{ inputs.price_usdc }}
+          SUPPORTER_SITE_ROOT: ${{ inputs.site_root }}
           GH_TOKEN: ${{ github.token }}
         run: node ../head/scripts/prepare-supporter-release.mjs
       - uses: actions/upload-artifact@v4

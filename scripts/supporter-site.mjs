@@ -7,6 +7,13 @@ export const DEFAULT_ENS_RPC = 'https://ethereum-rpc.publicnode.com';
 export const SIGNING_PAGE = 'https://thejollylama.github.io/DecentHead/supporter/ens.html';
 const requireThat = (test, message) => { if (!test) throw new Error(message); };
 
+export function validateSiteRoot(root = '.') {
+  requireThat(typeof root === 'string' && (root === '.' ||
+    /^[a-zA-Z0-9_-][a-zA-Z0-9_.-]*(\/[a-zA-Z0-9_-][a-zA-Z0-9_.-]*)*$/.test(root)),
+  'Site root must be "." or a relative static directory without dot-paths');
+  return root;
+}
+
 // Same rule as DecentCanopy's repo pins: tracked blobs minus dot-paths, rooted in a folder named after the repo,
 // so a release pin and a Canopy snapshot of the same commit share one CID.
 export function siteFiles(commit, git = args => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 << 20 })) {
@@ -19,15 +26,18 @@ export function siteFiles(commit, git = args => execFileSync('git', args, { enco
     .map(f => f.path).filter(path => !path.split('/').some(part => part.startsWith('.')));
 }
 
-export async function pinSite({ repo, commit, jwt, files = siteFiles(commit), readBlob = path => execFileSync('git', ['cat-file', 'blob', `${commit}:${path}`], { maxBuffer: 256 << 20 }), fetchImpl = fetch }) {
+export async function pinSite({ repo, commit, jwt, siteRoot = '.', files = siteFiles(commit), readBlob = path => execFileSync('git', ['cat-file', 'blob', `${commit}:${path}`], { maxBuffer: 256 << 20 }), fetchImpl = fetch }) {
   requireThat(/^[\w.-]+\/[\w.-]+$/.test(repo || '') && jwt, 'Repository and PINATA_JWT required for the site pin');
-  requireThat(files.includes('index.html'), `${repo} has no root index.html at ${commit.slice(0, 7)}; it is not a static site`);
+  validateSiteRoot(siteRoot);
+  const prefix = siteRoot === '.' ? '' : `${siteRoot}/`;
+  const selected = files.filter(path => path.startsWith(prefix));
+  requireThat(selected.includes(`${prefix}index.html`), `${repo} has no index.html in ${siteRoot} at ${commit.slice(0, 7)}; it is not a static site`);
   const folder = repo.split('/')[1], form = new FormData();
   let bytes = 0;
-  for (const path of files) {
+  for (const path of selected) {
     const blob = readBlob(path);
     bytes += blob.length;
-    form.append('file', new Blob([blob]), `${folder}/${path}`);
+    form.append('file', new Blob([blob]), `${folder}/${path.slice(prefix.length)}`);
   }
   form.append('pinataMetadata', JSON.stringify({ name: `${folder} site ${commit.slice(0, 7)}` }));
   form.append('pinataOptions', JSON.stringify({ cidVersion: 1 }));
@@ -37,7 +47,7 @@ export async function pinSite({ repo, commit, jwt, files = siteFiles(commit), re
   if (!response.ok) throw new Error(`Pinata site upload failed (HTTP ${response.status})`);
   const cid = (await response.json()).IpfsHash;
   requireThat(CID_V1.test(cid || ''), 'Pinata did not return a CIDv1 site folder');
-  return { cid, fileCount: files.length, bytes };
+  return { cid, fileCount: selected.length, bytes };
 }
 
 export function validateEnsRpc(url) {

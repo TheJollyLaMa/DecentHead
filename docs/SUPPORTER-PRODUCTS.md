@@ -54,8 +54,14 @@ pinned to one commit.
    - `SUPPORTER_ENS_RPC_URL` (optional). Defaults to the public publicnode mainnet RPC.
 6. Add the dapp's ENS name to DecentCanopy `data/agency-map.json` so the map shows its live site.
 
-The repository root must serve the dapp (for example `index.html`), because the card front is a
-screenshot of the tagged site.
+The repository root serves the dapp by default. For a static app in a subdirectory,
+set caller input `site_root: 'decent-calendar-vanilla'` (for example). The directory
+must contain a tracked `index.html` at the release tag. Only that directory is
+served for the screenshot and pinned as the runnable site, with its files at the
+pin's root; the source archive still contains the entire tagged repository.
+Non-root selections are recorded as `siteRoot` in the frozen manifest.
+Paths must be relative, without hidden or parent segments. This does not run a
+build or support a server-only application.
 
 ## Updating the kit
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ensDeployment, ensIssueBody, ensIssueTitle, pinSite, signingLink, siteFiles, validateEnsRpc } from '../scripts/supporter-site.mjs';
+import { ensDeployment, ensIssueBody, ensIssueTitle, pinSite, signingLink, siteFiles, validateEnsRpc, validateSiteRoot } from '../scripts/supporter-site.mjs';
 import { decodeContenthash, encodeContenthash, parseEnsDeployLink } from '../js/ens-content.js';
 import { buildDiscordPayload, validateManifest } from '../scripts/supporter-protocol.mjs';
 import { buildSupporterMetadata } from '../scripts/supporter-metadata.mjs';
@@ -74,6 +74,41 @@ test('site pin uploads one repo-named CIDv1 folder', async () => {
   assert.deepEqual(JSON.parse(request.init.body.get('pinataOptions')), { cidVersion: 1 });
   await assert.rejects(pinSite({ repo: manifest.repo, commit, jwt: 'jwt', files: ['README.md'], readBlob: () => Buffer.alloc(0), fetchImpl }), /index\.html/);
   await assert.rejects(pinSite({ repo: manifest.repo, commit, jwt: 'jwt', files: ['index.html'], readBlob: () => Buffer.alloc(0), fetchImpl: async () => ({ ok: false, status: 403 }) }), /HTTP 403/);
+});
+
+test('static site roots reject absolute, hidden and traversal paths', () => {
+  assert.equal(validateSiteRoot(), '.');
+  for (const root of ['.', 'decent-calendar-vanilla', 'apps/calendar.v1']) {
+    assert.equal(validateSiteRoot(root), root);
+  }
+  for (const root of ['', null, 1, '/tmp', '../site', 'app/../site', './site',
+    'app/.cache', 'site/', 'a//b', 'app\\site', 'a\nb', 'a;pwd']) {
+    assert.throws(() => validateSiteRoot(root), /Site root/);
+  }
+});
+
+test('subdirectory pin flattens only the selected static app and reads exact source paths', async () => {
+  let uploaded, reads = [];
+  const options = {
+    repo: 'TheJollyLaMa/DecentCalendar', commit, jwt: 'jwt', siteRoot: 'decent-calendar-vanilla',
+    files: ['README.md', 'decent-calendar-vanilla/index.html',
+      'decent-calendar-vanilla/js/calendar.js', 'decent-calendar-react-app/index.html',
+      'decent-calendar-vanilla-other/index.html'],
+    readBlob: path => { reads.push(path); return Buffer.from(path); },
+    fetchImpl: async (url, init) => {
+      uploaded = init.body.getAll('file').map(file => file.name);
+      return { ok: true, json: async () => ({ IpfsHash: CID }) };
+    },
+  };
+  const result = await pinSite(options);
+  assert.deepEqual(reads, ['decent-calendar-vanilla/index.html', 'decent-calendar-vanilla/js/calendar.js']);
+  assert.deepEqual(uploaded, ['DecentCalendar/index.html', 'DecentCalendar/js/calendar.js']);
+  assert.equal(result.fileCount, 2);
+  assert.equal(result.bytes, reads.reduce((sum, path) => sum + Buffer.byteLength(path), 0));
+  reads = [];
+  await assert.rejects(pinSite({ ...options, siteRoot: '../outside' }), /Site root/);
+  await assert.rejects(pinSite({ ...options, files: ['index.html'] }), /no index.html/);
+  assert.deepEqual(reads, []);
 });
 
 test('ENS gate: deployed, superseded, pending, unconfigured', () => {

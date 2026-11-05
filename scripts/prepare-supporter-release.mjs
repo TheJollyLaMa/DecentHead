@@ -2,8 +2,9 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { buildSupporterMetadata, supporterQuantity, supporterPrice, supporterPriceLabel } from './supporter-metadata.mjs';
 import { validateManifest } from './supporter-protocol.mjs';
-import { ENS_NAME, pinSite } from './supporter-site.mjs';
+import { ENS_NAME, pinSite, validateSiteRoot } from './supporter-site.mjs';
 const { TAG: tag, GITHUB_REPOSITORY: repo, PINATA_JWT: jwt } = process.env;
+const siteRoot = validateSiteRoot(process.env.SUPPORTER_SITE_ROOT);
 if (!tag || tag.startsWith('-') || !/^[\w./-]+$/.test(tag)) throw new Error('A valid release tag is required');
 const run = (cmd, args) => execFileSync(cmd, args, { encoding: 'utf8' }).trim();
 if (!/^[\w.-]+\/[\w.-]+$/.test(repo || '') || !jwt) throw new Error('Repository and PINATA_JWT required; preparation must be fully pinned');
@@ -37,10 +38,10 @@ const animation = `ipfs://${await pin(readFileSync('supporter-presentation.html'
 const ensName = String(process.env.SUPPORTER_ENS_NAME || '').trim().toLowerCase();
 if (ensName && !ENS_NAME.test(ensName)) throw new Error('SUPPORTER_ENS_NAME must be a .eth name');
 // The runnable site at this exact commit; the steward may verify ENS before minting.
-const site = await pinSite({ repo, commit, jwt });
+const site = await pinSite({ repo, commit, jwt, siteRoot });
 console.log(`Pinned ${site.fileCount} site files (${site.bytes} bytes) as ${site.cid}`);
 const summary = String(existingRelease.body || '').replace(/<!--[\s\S]*?-->/g, '').replace(/[#*`>\r\n]+/g, ' ').trim().slice(0, 280);
-const manifest = { schema: 1, repo, version: tag, commit, ...artwork, chainId: 8453, quantity, codeArchiveCid, siteCid: site.cid, ...(ensName ? { ensName } : {}), front, back, animation, summary };
+const manifest = { schema: 1, repo, version: tag, commit, ...artwork, chainId: 8453, quantity, codeArchiveCid, siteCid: site.cid, ...(siteRoot !== '.' ? { siteRoot } : {}), ...(ensName ? { ensName } : {}), front, back, animation, summary };
 const metadata = buildSupporterMetadata({ repo, version: tag, commit, codeArchiveCid, image: front, release: manifest });
 writeFileSync('supporter-metadata.json', JSON.stringify(metadata, null, 2) + '\n');
 const metadataCid = await pin(readFileSync('supporter-metadata.json'), 'supporter-metadata.json', 'application/json');

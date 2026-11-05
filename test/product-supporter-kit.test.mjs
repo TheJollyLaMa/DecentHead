@@ -93,3 +93,14 @@ test('product card fills text without HTML injection', () => {
   assert.match(card, /textContent = value/);
   assert.match(card, /src="product-preview\.png"/);
 });
+
+test('workflow renders and pins the same validated static root', () => {
+  const workflow = read('.github/workflows/product-supporter-prepare.yml');
+  assert.ok(inputsOf(workflow).includes('site_root'));
+  assert.equal((workflow.match(/SUPPORTER_SITE_ROOT: \$\{\{ inputs\.site_root \}\}/g) || []).length, 3);
+  assert.match(workflow, /validateSiteRoot\(process\.env\.SUPPORTER_SITE_ROOT\)/);
+  assert.match(workflow, /--directory "\$SUPPORTER_SITE_ROOT"/);
+  const prepare = read('scripts/prepare-supporter-release.mjs');
+  assert.match(prepare, /validateSiteRoot\(process\.env\.SUPPORTER_SITE_ROOT\)/);
+  assert.match(prepare, /pinSite\(\{ repo, commit, jwt, siteRoot \}\)/);
+});
