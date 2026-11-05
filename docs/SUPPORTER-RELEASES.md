@@ -61,6 +61,13 @@ Metadata exposes them as `properties.site_cid`, `properties.ens_name` and
 `properties.product.site`. Both fields are optional, so older frozen manifests
 stay valid.
 
+For static apps outside the repository root, the reusable preparation workflow's
+`site_root` input selects a tracked directory containing `index.html`. The same
+directory is used for the card screenshot and site pin. The site pin includes
+only that subtree, flattened to the pin's root, while the code archive retains
+the entire repository. The manifest records non-default selections as `siteRoot`.
+In this case a whole-repository Canopy pin is not expected to have the same CID.
+
 After the announce workflow verifies the mint and listing, it reads the name's
 mainnet contenthash (`SUPPORTER_ENS_RPC_URL`, default publicnode):
 
