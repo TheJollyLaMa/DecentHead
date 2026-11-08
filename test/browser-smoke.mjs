@@ -225,7 +225,7 @@ try {
   const purchase = await pageFor();
   const escrowABI = new ethers.Interface(SUPPORTER_ESCROW_ABI);
   let active = true;
-  await purchase.route('https://mainnet.base.org/**', async route => {
+  await purchase.route(/^https:\/\/(?:mainnet\.base\.org|base-rpc\.publicnode\.com)\//, async route => {
     const body = route.request().postDataJSON();
     const answer = rpc => {
       if (rpc.method === 'eth_chainId') return { id: rpc.id, jsonrpc: '2.0', result: '0x2105' };
