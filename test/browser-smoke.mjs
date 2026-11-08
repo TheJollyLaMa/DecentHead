@@ -225,7 +225,7 @@ try {
   const purchase = await pageFor();
   const escrowABI = new ethers.Interface(SUPPORTER_ESCROW_ABI);
   let active = true;
-  await purchase.route('https://mainnet.base.org/**', async route => {
+  await purchase.route(/^https:\/\/(?:mainnet\.base\.org|base-rpc\.publicnode\.com)\//, async route => {
     const body = route.request().postDataJSON();
     const answer = rpc => {
       if (rpc.method === 'eth_chainId') return { id: rpc.id, jsonrpc: '2.0', result: '0x2105' };
@@ -233,7 +233,8 @@ try {
       const call = escrowABI.parseTransaction({ data: rpc.params[0].data });
       const result = call.name === 'getListing'
         ? [[BASE_SUPPORTER.nft, 7n, 0n, BASE_SUPPORTER.usdc, 10000000n, 1000n, active, 'Supporter']]
-        : call.name === 'getNFTBalance' ? [1000n] : [false];
+        : call.name === 'getNFTBalance' ? [1000n]
+        : call.name === 'nextListingId' ? [4n] : [false];
       return { id: rpc.id, jsonrpc: '2.0', result: escrowABI.encodeFunctionResult(call.name, result) };
     };
     await route.fulfill({ json: Array.isArray(body) ? body.map(answer) : answer(body) });

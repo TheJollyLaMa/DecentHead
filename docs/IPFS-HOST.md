@@ -16,6 +16,19 @@ use `window.DecentHead.getIpfs()` or retain its own provider. The header does
 not assume a host-owned provider has switched when the shared provider changes.
 See [ADOPTING.md](ADOPTING.md) for data hooks and provider configuration.
 
+`getIpfs().verifyConnection()` is an explicit read-only connection check, never
+called on mount or provider selection. Pinata uses the fixed HTTPS
+`/data/testAuthentication` endpoint with the user's personal credential in
+headers; Kubo uses POST `/api/v0/version` on a credential-free loopback endpoint
+and never receives Pinata headers. Both reject redirects and time out after
+15 seconds. HTTP errors, invalid response shapes and network/CORS failures
+remain errors. Snapshots expose `connection.state` (`unverified`, `checking`,
+`ready`, `error`) and a credential-free detail, not credentials. Configuration
+changes reset verification and stale checks cannot verify a different provider.
+`ready` describes only authentication/version response, not storage retention,
+upload permissions, rewards or remotely enforced UCAN. Shared-provider
+verification does not verify a separate host-owned storage transport.
+
 ## Contract
 
 ```js

@@ -15,6 +15,10 @@ listings. No credentials belong in this public file.
   Provider selection does not upload anything. Backup/restore uses host-owned
   data hooks or the version 1 [host contract](docs/IPFS-HOST.md). Community
   pinning is opt-in, separate from reward eligibility and payouts.
+  **Verify provider connection** explicitly checks Pinata authentication or the
+  loopback Kubo version endpoint without uploading or pinning. Provider choice
+  remains unverified until this succeeds. Credentials stay in page memory;
+  connection readiness does not prove upload permission, retention or rewards.
 - **Wallet:** EIP-6963 discovery (MetaMask preferred), injected-provider fallback,
   ethers v6 BrowserProvider, click-only account access, configured-chain
   switch/add, account/network/disconnect events, and MetaMask mobile links.
