@@ -96,6 +96,12 @@ addresses avoid unnecessary ENS/RPC traffic.
 
 ## IPFS context adapter
 
+Provider selection is configuration, not connection proof. The shared IPFS
+panel's **Verify provider connection (no upload)** action authenticates with
+Pinata or reads the local Kubo version on explicit user request. See
+[IPFS-HOST.md](IPFS-HOST.md) for states, endpoint restrictions and the distinction
+between shared-provider connectivity and host-owned storage capabilities.
+
 The head must never infer which localStorage records belong to your app. The
 [version 1 host contract](IPFS-HOST.md) remains unchanged. Prefer an adapter
 that opens your app’s own backup, public replication and reward participation
